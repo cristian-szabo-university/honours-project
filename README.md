@@ -1,7 +1,7 @@
 <img src="project-logo.jpg" align="right" />
 # Honours Project [![Awesome](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)](https://github.com/sindresorhus/awesome)
 
-Description TBA
+A **GPGPU cracking hashed passwords library** written in C/C++ developed to illustrate a brute-force attack against a MD5 hashed password. Includes additional support for other types of attacks (dictionary) and hashing algorithms (e.g. SHA1). The library is based on **OpenCL** which allow the user to change between CPU and GPU execution or run in benchmark mode the cracking process.
 
 ## Status
 
@@ -9,11 +9,15 @@ Description TBA
 
 ## Introduction
 
-TBA
+Due to the now available massive computational power provided by grid computing systems or specialised hardware like FPGA there is a higher probability of successful password cracking. The library implements a indexed-based word generator on the GPU followed by a meet-in-the-middle attack of the hashed algorithm to perform an fast cracking process. The application will provide an interface of communication with the library to execute the cracking attack.
 
 ## Requirements
 
-- Intel OpenCL SDK >= 6.0.1 or AMD OpenCL SDK >= 3.0.0 or NVIDIA OpenCL SDK > 8.5.0
+- CMake v3.2 – generate project files for the IDE
+- Visual Studio 14 – development environment
+- OpenCL Driver 1.1 – execute OpenCL kernels
+- Docopt – library to create a user command line support for the application
+- VC++ v19 – compiler with C++ 11 features for the IDE
 
 ## How To Install
 

@@ -9,7 +9,7 @@ A **GPGPU cracking hashed passwords library** written in C/C++ developed to illu
 
 ## Introduction
 
-Due to the now available massive computational power provided by grid computing systems or specialised hardware like FPGA there is a higher probability of successful password cracking. The library implements a indexed-based word generator on the GPU followed by a meet-in-the-middle attack of the hashed algorithm to perform an fast cracking process. The application will provide an interface of communication with the library to execute the cracking attack.
+Due to the now available massive computational power provided by grid computing systems or specialised hardware like FPGA there is a higher probability of successful password cracking. The library implements a **indexed-based word generator** on the GPU followed by a **meet-in-the-middle attack** of the hashed algorithm to perform an fast cracking process. The application will provide an interface of communication with the library to execute the cracking attack.
 
 ## Requirements
 
@@ -19,7 +19,7 @@ Due to the now available massive computational power provided by grid computing 
 - Docopt – library to create a user command line support for the application
 - VC++ v19 – compiler with C++ 11 features for the IDE
 
-## How To Install
+## Installation
 
 Minimum setup for an application to load the HashCrack library after the binary files have been installed on local machine.
 
@@ -36,5 +36,11 @@ target_link_libraries (${PROJECT_NAME} HonoursProject::HashCrack)
 
 add_custom_command (TARGET ${PROJECT_NAME} 
 	POST_BUILD COMMAND ${CMAKE_COMMAND} 
-		-E copy_if_different "$<TARGET_FILE_DIR:HonoursProject::HashCrack>/$<TARGET_FILE_NAME:HonoursProject::HashCrack>" "$<TARGET_FILE_DIR:${PROJECT_NAME}>")
+	-E copy_if_different 
+		"$<TARGET_FILE_DIR:HonoursProject::HashCrack>/$<TARGET_FILE_NAME:HonoursProject::HashCrack>"
+ 		"$<TARGET_FILE_DIR:${PROJECT_NAME}>")
 ```
+
+## License
+
+TODO: Write license

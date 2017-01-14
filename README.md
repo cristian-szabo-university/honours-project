@@ -5,7 +5,10 @@ A **GPGPU cracking hashed passwords library** written in C/C++ developed to illu
 
 ## Status
 
-[![build status](https://gitlab.com/B00233705/Honours-Project/badges/master/build.svg)](https://gitlab.com/B00233705/Honours-Project/commits/master)
+Build | Linux | Windows
+--- | --- | ---
+32-bit | [![Build Status](https://travis-ci.org/cristian-szabo/honours-project.svg?branch=master)](https://travis-ci.org/cristian-szabo/honours-project) | [![Build status](https://ci.appveyor.com/api/projects/status/rp8ftijp93kvn8wq/branch/master?svg=true)](https://ci.appveyor.com/project/cristian-szabo/honours-project/branch/master)
+64-bit | [![Build Status](https://travis-ci.org/cristian-szabo/honours-project.svg?branch=master)](https://travis-ci.org/cristian-szabo/honours-project) | [![Build status](https://ci.appveyor.com/api/projects/status/rp8ftijp93kvn8wq/branch/master?svg=true)](https://ci.appveyor.com/project/cristian-szabo/honours-project/branch/master)
 
 ## Introduction
 

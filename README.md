@@ -1,4 +1,9 @@
-# Honours Project
+<img src="icon.jpg" align="right" />
+# Honours Project - GPGPU Cracking Hashed Passwords with OpenCL [![Awesome](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)](https://github.com/sindresorhus/awesome)
+
+Description TBA
+
+## Status
 
 [![build status](https://gitlab.com/B00233705/Honours-Project/badges/master/build.svg)](https://gitlab.com/B00233705/Honours-Project/commits/master)
 

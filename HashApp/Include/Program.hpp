@@ -11,6 +11,16 @@ namespace HonoursProject
     class HashCracker;
 }
 
+class comma_num_punct : public std::numpunct<char>
+{
+protected:
+
+    virtual char do_thousands_sep() const;
+
+    virtual std::string do_grouping() const;
+
+};
+
 class Program
 {
 public:
@@ -27,6 +37,12 @@ private:
 
     std::shared_ptr<HonoursProject::HashCracker> hash_cracker;
 
-    void processUserCommand(char cmd);
+    std::locale comma_locale;
+
+    void process_input_command(char cmd);
+
+    std::string format_display_time(std::chrono::seconds tm);
+
+    std::string format_display_speed(double speed_time, double exec_time);
 
 };

@@ -55,31 +55,29 @@ namespace HonoursProject
 
         Status getStatus();
 
-        void setPlainMsg(const std::string& plain_msg);
-
-        std::string getPlainMsg();
-
-        void resume();
-
-        void pause();
-
-        void quit();
-
         std::string getHashMsg();
 
         std::string getHashFunc();
 
-        std::string getTimeStart();
+        std::chrono::system_clock::time_point getTimeStart();
 
-        std::string getTimeEstimate();
+        std::chrono::seconds getTimeRunning();
 
-        std::string getProgress();
+        std::chrono::system_clock::time_point getTimeFinish();
+
+        std::chrono::seconds getTimeEstimated();
+
+        std::uint64_t getMessageTotal();
+
+        std::uint64_t getMessageProgress();
 
         std::size_t getDeviceNum();
 
-        std::string getDeviceSpeed(std::size_t device_pos);
+        double getDeviceSpeed(std::size_t device_pos);
 
-        void executeAttack(AttackMode attack_mode, const std::string& input, DeviceFilter device_filter = DeviceFilter::GPU_ONLY);
+        double getDeviceExec(std::size_t device_pos);
+
+        std::future<std::string> executeAttack(AttackMode attack_mode, const std::string& input, DeviceFilter device_filter = DeviceFilter::GPU_ONLY);
 
     private:
 
@@ -95,7 +93,7 @@ namespace HonoursProject
 
         std::uint64_t total_message_count;
 
-        std::time_t start_time;
+        std::chrono::system_clock::time_point start_time;
 
         std::vector<std::shared_ptr<Device>> devices;
 

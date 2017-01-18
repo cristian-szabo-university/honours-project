@@ -43,42 +43,6 @@ namespace HonoursProject
         return status;
     }
 
-    void HashCracker::setPlainMsg(const std::string & plain_msg)
-    {
-        this->plain_msg = plain_msg;
-    }
-
-    std::string HashCracker::getPlainMsg()
-    {
-        worker_future.get();
-
-        return plain_msg;
-    }
-
-    void HashCracker::resume()
-    {
-        if (status == Status::Paused && status != Status::Cracked)
-        {
-            status = Status::Running;
-        }
-    }
-
-    void HashCracker::pause()
-    {
-        if (status == Status::Running && status != Status::Cracked)
-        {
-            status = Status::Paused;
-        }
-    }
-
-    void HashCracker::quit()
-    {
-        if (status != Status::Cracked)
-        {
-            status = Status::Aborted;
-        }
-    }
-
     std::string HashCracker::getHashMsg()
     {
         return hash_msg;
@@ -106,16 +70,24 @@ namespace HonoursProject
         return result;
     }
 
-    std::string HashCracker::getTimeStart()
+    std::chrono::system_clock::time_point HashCracker::getTimeStart()
     {
-        std::string result = std::ctime(&start_time);
-
-        result = KernelPlatform::CleanCLString(result);
-
-        return result;
+        return start_time;
     }
 
-    std::string HashCracker::getTimeEstimate()
+    std::chrono::seconds HashCracker::getTimeRunning()
+    {
+        std::chrono::system_clock::time_point now_time = std::chrono::system_clock::now();
+
+        return std::chrono::duration_cast<std::chrono::seconds>(now_time - start_time);
+    }
+
+    std::chrono::system_clock::time_point HashCracker::getTimeFinish()
+    {
+        return start_time + getTimeEstimated();
+    }
+
+    std::chrono::seconds HashCracker::getTimeEstimated()
     {
         double hash_speed_ms = 0.0;
 
@@ -126,32 +98,19 @@ namespace HonoursProject
 
         hash_speed_ms /= devices.size();
 
-        double eta_time = total_message_count / hash_speed_ms;
+        double eta_time = total_message_count / hash_speed_ms / 1000.0;
 
-        // Convert to milliseconds from seconds
-        eta_time /= 1000;
-
-        std::time_t finish_time = std::chrono::system_clock::to_time_t(
-            std::chrono::system_clock::from_time_t(start_time) + 
-            std::chrono::seconds(static_cast<long>(eta_time)));
-
-        std::string finish_time_str = std::ctime(&finish_time);
-
-        finish_time_str = KernelPlatform::CleanCLString(finish_time_str);
-
-        return finish_time_str;
+        return std::chrono::seconds(static_cast<std::uint64_t>(eta_time));
     }
 
-    std::string HashCracker::getProgress()
+    std::uint64_t HashCracker::getMessageTotal()
     {
-        std::stringstream ss;
-        ss.imbue({ std::locale(), new comma_numpunct() });
+        return total_message_count;
+    }
 
-        ss << total_message_count;
-        ss << " / ";
-        ss << work_dispatch->getTotalMessageTested();
-
-        return ss.str();
+    std::uint64_t HashCracker::getMessageProgress()
+    {
+        return work_dispatch->getTotalMessageTested();
     }
 
     std::size_t HashCracker::getDeviceNum()
@@ -159,41 +118,17 @@ namespace HonoursProject
         return devices.size();
     }
 
-    std::string HashCracker::getDeviceSpeed(std::size_t device_pos)
+    double HashCracker::getDeviceSpeed(std::size_t device_pos)
     {
-        std::stringstream ss;
-        ss.imbue({ std::locale(), new comma_numpunct() });
-
-        double speed_time = work_dispatch->getSpeedTime(devices.at(device_pos)) * 1000.0;
-
-        char units[7] = { ' ', 'k', 'M', 'G', 'T', 'P', 'E' };
-
-        std::uint32_t level = 0;
-
-        while (speed_time > 99999)
-        {
-            speed_time /= 1000;
-
-            level++;
-        }
-
-        if (level > 0)
-        {
-            ss << std::setprecision(2) << std::fixed << speed_time << " " << units[level] << "H/s";
-        }
-        else
-        {
-            ss << std::setprecision(2) << std::fixed << speed_time << "H/s";
-        }
-
-        double exec_time = work_dispatch->getExecTime(devices.at(device_pos));
-
-        ss << " (" << std::setprecision(2) << std::fixed << exec_time << " ms)";
-
-        return ss.str();
+        return work_dispatch->getSpeedTime(devices.at(device_pos));
     }
 
-    void HashCracker::executeAttack(AttackMode attack_mode, const std::string & input, DeviceFilter device_filter)
+    double HashCracker::getDeviceExec(std::size_t device_pos)
+    {
+        return work_dispatch->getExecTime(devices.at(device_pos));
+    }
+
+    std::future<std::string> HashCracker::executeAttack(AttackMode attack_mode, const std::string& input, DeviceFilter device_filter)
     {
         cl_int cl_error = CL_SUCCESS;
 
@@ -312,7 +247,7 @@ namespace HonoursProject
 
         for (auto& attack_task : attack_tasks)
         {
-            std::shared_ptr<AutotuneTask> autotune_task = std::make_shared<AutotuneTask>(attack_task);
+            std::shared_ptr<AutotuneTask> autotune_task = std::make_shared<AutotuneTask>(attack_task, 12);
 
             autotune_futures.push_back(std::async(std::launch::async, &AutotuneTask::run, autotune_task.get()));
 
@@ -334,10 +269,10 @@ namespace HonoursProject
 
         autotune_tasks.clear();
 
-        work_dispatch = std::make_shared<WorkDispatchTask>(shared_from_this(), attack_tasks, total_message_count);
+        work_dispatch = std::make_shared<WorkDispatchTask>(shared_from_this(), attack_tasks, total_batch_size);
 
-        worker_future = std::async(std::launch::async, &WorkDispatchTask::run, work_dispatch.get());
+        start_time = std::chrono::system_clock::now();
 
-        start_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        return std::async(std::launch::async, &WorkDispatchTask::run, work_dispatch.get());
     }
 }

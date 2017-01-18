@@ -8,7 +8,7 @@ namespace HonoursProject
     class HashCracker;
     class Device;
 
-    class HASHCRACK_PUBLIC WorkDispatchTask : public TTask<void>
+    class HASHCRACK_PUBLIC WorkDispatchTask : public TTask<std::string>
     {
     public:
 
@@ -16,7 +16,7 @@ namespace HonoursProject
 
         virtual ~WorkDispatchTask();
 
-        virtual void run() override;
+        virtual std::string run() override;
 
         std::uint64_t getTotalBatchSize();
 

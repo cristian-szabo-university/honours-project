@@ -19,9 +19,9 @@ namespace HonoursProject
     {
     }
 
-    void WorkDispatchTask::run()
+    std::string WorkDispatchTask::run()
     {
-        std::string hash_msg;
+        std::string hash_plain;
 
         std::uint64_t batch_offset = 0;
         std::uint64_t batch_left = total_batch_size - batch_offset;
@@ -79,11 +79,11 @@ namespace HonoursProject
                 std::for_each(future_iter, attack_futures.end(),
                     [&](std::future<std::string>& future)
                 {
-                    std::string plain_msg = future.get();
+                    std::string result = future.get();
 
-                    if (!plain_msg.empty())
+                    if (!result.empty())
                     {
-                        hash_cracker->setPlainMsg(plain_msg);
+                        hash_plain = result;
                     }
 
                     std::size_t attack_pos = std::distance(future_begin, attack_futures.end()) - 1;
@@ -98,6 +98,8 @@ namespace HonoursProject
                 future_iter = attack_futures.erase(future_iter, attack_futures.end());
             }
         }
+
+        return hash_plain;
     }
 
     std::uint64_t WorkDispatchTask::getTotalBatchSize()
@@ -112,7 +114,7 @@ namespace HonoursProject
 
     double WorkDispatchTask::getExecTime(std::shared_ptr<Device> device)
     {
-        double result;
+        double result = 0.0;
 
         for (auto& attack_task : attack_tasks)
         {
@@ -127,13 +129,13 @@ namespace HonoursProject
 
     double WorkDispatchTask::getSpeedTime(std::shared_ptr<Device> device)
     {
-        double result;
+        double result = 0.0;
 
         for (auto& attack_task : attack_tasks)
         {
             if (attack_task->getDevice()->getHandle()() == device->getHandle()())
             {
-                result = attack_task->getAvgSpeedTime();
+                result += attack_task->getAvgSpeedTime();
             }
         }
 

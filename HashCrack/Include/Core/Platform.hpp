@@ -23,6 +23,8 @@ namespace HonoursProject
         static const std::size_t MAX_EXEC_CACHE_SIZE = 128;
         static const std::size_t MAX_SPEED_CACHE_SIZE = 128;
 
+        static const std::size_t AUTOTUNE_VALIDATE_CHECKS = 1;
+
         static std::uint32_t to_int32(const std::uint8_t * bytes);
 
     };
@@ -31,7 +33,15 @@ namespace HonoursProject
     {
     public:
 
-        static const std::size_t MAX_KERNEL_WORK_GROUP = 512;
+        static const std::size_t MAX_KERNEL_WORK_GROUP = 256;
+
+        static const std::size_t DEVICE_SPEED_MIN = 1;
+
+        static const std::size_t DEVICE_SPEED_MAX = 1024;
+
+        static const std::size_t KERNEL_LOOPS_MIN = 1;
+
+        static const std::size_t KERNEL_LOOPS_MAX = 1024;
 
         static const std::uint32_t MAX_MESSAGE_PREFIX = 1024;
 
@@ -137,13 +147,3 @@ namespace HonoursProject
 
     };
 }
-
-class comma_numpunct : public std::numpunct<char>
-{
-protected:
-
-    virtual char do_thousands_sep() const;
-
-    virtual std::string do_grouping() const;
-
-};

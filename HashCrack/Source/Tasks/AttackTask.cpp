@@ -6,6 +6,7 @@
 #include "Core/HashCracker.hpp"
 
 #include "OpenCL/Kernel.hpp"
+#include "OpenCL/Device.hpp"
 
 namespace HonoursProject
 {
@@ -17,7 +18,8 @@ namespace HonoursProject
         batch_offset(0), 
         inner_loop_size(0), 
         inner_loop_step(0), 
-        inner_loop_pos(0)
+        inner_loop_pos(0),
+        device(kernel_hash_crack->getProgram()->getDevice())
     {
         std::vector<bool> param_check =
         {
@@ -73,7 +75,7 @@ namespace HonoursProject
 
             kernel_hash_crack->setParam("inner_loop_size", inner_loop_left);
 
-            double exec_time_ms = kernel_hash_crack->execute({ batch_size , 1, 1 }, { 256, 1, 1 });
+            double exec_time_ms = kernel_hash_crack->execute({ batch_size , 1, 1 }, { device->getMaxWorkGroupSize(), 1, 1 });
 
             auto speed_end_time = std::chrono::high_resolution_clock::now();
 
@@ -99,12 +101,14 @@ namespace HonoursProject
             if (hash_cracked.front().found)
             {
                 hash_cracker->setStatus(HashCracker::Status::Cracked);
+
+                break;
             }
         }
 
         msg_idx = hash_cracked.front();
 
-        return "";
+        return std::string();
     }
 
     void AttackTask::setBatchSize(std::uint32_t batch_size)
@@ -180,7 +184,12 @@ namespace HonoursProject
 
     std::shared_ptr<Device> AttackTask::getDevice()
     {
-        return kernel_hash_crack->getProgram()->getDevice();
+        return device;
+    }
+
+    std::shared_ptr<Kernel> AttackTask::getKernel()
+    {
+        return kernel_hash_crack;
     }
 
     void AttackTask::preKernelExecute(std::uint32_t inner_loop_left, std::uint32_t inner_loop_pos)

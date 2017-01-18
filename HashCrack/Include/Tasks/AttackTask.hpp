@@ -42,9 +42,13 @@ namespace HonoursProject
 
         std::shared_ptr<Device> getDevice();
 
+        std::shared_ptr<Kernel> getKernel();
+
     protected:
 
         std::shared_ptr<HashCracker> hash_cracker;
+
+        std::shared_ptr<Device> device;
 
         std::shared_ptr<Kernel> kernel_hash_crack;
 

@@ -90,7 +90,7 @@ namespace HonoursProject
 
         msg_suffix_size = message_size - msg_prefix_size;
 
-        inner_loop_size = Charset::GetTotalMsgNum(charsets, msg_prefix_size);
+        inner_loop_size = static_cast<uint32_t>(Charset::GetTotalMsgNum(charsets, msg_prefix_size));
 
         total_batch_size /= inner_loop_size;
 

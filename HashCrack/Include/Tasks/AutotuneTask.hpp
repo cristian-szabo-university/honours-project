@@ -10,7 +10,7 @@ namespace HonoursProject
     {
     public:
 
-        AutotuneTask(std::shared_ptr<AttackTask> attack_task);
+        AutotuneTask(std::shared_ptr<AttackTask> attack_task, double target_speed);
 
         virtual ~AutotuneTask();
 
@@ -19,6 +19,10 @@ namespace HonoursProject
     private:
 
         std::shared_ptr<AttackTask> attack_task;
+
+        double target_speed;
+
+        double try_execute(std::uint32_t device_speed, std::uint32_t kernel_loops);
 
     };
 }

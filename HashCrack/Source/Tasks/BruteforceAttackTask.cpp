@@ -5,6 +5,7 @@
 #include "Core/Charset.hpp"
 
 #include "OpenCL/Kernel.hpp"
+#include "OpenCL/Device.hpp"
 
 namespace HonoursProject
 {
@@ -28,27 +29,27 @@ namespace HonoursProject
 
     std::string BruteforceAttackTask::run()
     {
-        kernel_gen_word_suffix->execute({ batch_size, 1, 1 }, { 256, 1, 1 });
+        std::string result;
+
+        kernel_gen_word_suffix->execute({ batch_size, 1, 1 }, { device->getMaxWorkGroupSize(), 1, 1 });
 
         kernel_gen_word_suffix->copyParam("msg", kernel_hash_crack, batch_size);
 
         AttackTask::run();
 
-        std::uint64_t hash_rank;
-
         if (msg_idx.found)
         {
+            std::uint64_t hash_rank;
+
             hash_rank = batch_offset;
             hash_rank += msg_idx.msg_batch_pos;
             hash_rank *= inner_loop_size;
             hash_rank += inner_loop_pos + msg_idx.inner_loop_pos;
-        }
-        else
-        {
-            return "";
+
+            result = Charset::GetMsgFromIndex(hash_rank, charsets);
         }
 
-        return Charset::GetMsgFromIndex(hash_rank, charsets);
+        return result;
     }
 
     void BruteforceAttackTask::setBatchSize(std::uint32_t batch_size)
@@ -80,7 +81,7 @@ namespace HonoursProject
 
         kernel_gen_word_prefix->setParam("msg_batch_offset", inner_loop_pos);
 
-        kernel_gen_word_prefix->execute({ inner_loop_left, 1, 1 }, { 32, 1, 1 });
+        kernel_gen_word_prefix->execute({ inner_loop_left, 1, 1 }, { device->getMaxWorkGroupSize(), 1, 1 });
 
         kernel_gen_word_prefix->copyParam("msg_prefix", kernel_hash_crack, inner_loop_left);
     }

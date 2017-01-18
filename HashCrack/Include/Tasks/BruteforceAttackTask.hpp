@@ -10,7 +10,12 @@ namespace HonoursProject
     {
     public:
 
-        BruteforceAttackTask(std::shared_ptr<HashCracker> hash_cracker, std::shared_ptr<Kernel> kernel_gen_word_prefix, std::shared_ptr<Kernel> kernel_gen_word_suffix, std::shared_ptr<Kernel> kernel_hash_crack, std::vector<Charset> charsets);
+        BruteforceAttackTask(
+            std::shared_ptr<HashCracker> hash_cracker, 
+            std::shared_ptr<Kernel> kernel_gen_word_prefix, 
+            std::shared_ptr<Kernel> kernel_gen_word_suffix, 
+            std::shared_ptr<Kernel> kernel_hash_crack, 
+            std::vector<Charset> charsets);
 
         virtual ~BruteforceAttackTask();
 

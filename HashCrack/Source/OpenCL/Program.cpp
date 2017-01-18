@@ -283,47 +283,54 @@ namespace HonoursProject
             throw std::runtime_error("ERROR: command_queue.flush()\n");
         }
 
+        cl_error = event.wait();
+
+        if (cl_error != CL_SUCCESS)
+        {
+            throw std::runtime_error("ERROR: event.wait()\n");
+        }
+        
+        double exec_time_ms = 0.0;
+
+        if (enable_profile)
+        {
+            std::int64_t start_time = event.getProfilingInfo<CL_PROFILING_COMMAND_START>(&cl_error);
+
+            if (cl_error != CL_SUCCESS)
+            {
+                throw std::runtime_error("ERROR: command_queue.finish()\n");
+            }
+
+            std::int64_t end_time = event.getProfilingInfo<CL_PROFILING_COMMAND_END>(&cl_error);
+
+            if (cl_error != CL_SUCCESS)
+            {
+                throw std::runtime_error("ERROR: command_queue.finish()\n");
+            }
+
+            exec_time_ms = ((double)(end_time - start_time) / 1000000.0);
+        }
+
         cl_error = command_queue.finish();
 
         if (cl_error != CL_SUCCESS)
         {
             throw std::runtime_error("ERROR: command_queue.finish()\n");
         }
-        
+
         for (std::size_t param_pos = 0; param_pos < kernel->getParamNum(); param_pos++)
         {
             std::shared_ptr<KernelParam> param = kernel->getParamAt(param_pos);
 
             if (param->autoSyncEnable() &&
                 (param->getAddressQualifier() == KernelParam::AddressQualifier::Global ||
-                 param->getAddressQualifier() == KernelParam::AddressQualifier::Local) &&
-                (param->getAccessQualifier() == KernelParam::AccessQualifier::WriteOnly ||
-                 param->getAccessQualifier() == KernelParam::AccessQualifier::ReadWrite))
+                    param->getAddressQualifier() == KernelParam::AddressQualifier::Local) &&
+                    (param->getAccessQualifier() == KernelParam::AccessQualifier::WriteOnly ||
+                        param->getAccessQualifier() == KernelParam::AccessQualifier::ReadWrite))
             {
                 kernel->syncParam(param->getName());
             }
         }
-        
-        if (!enable_profile)
-        {
-            return 0.0;
-        }
-
-        std::int64_t start_time = event.getProfilingInfo<CL_PROFILING_COMMAND_START>(&cl_error);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: command_queue.finish()\n");
-        }
-
-        std::int64_t end_time = event.getProfilingInfo<CL_PROFILING_COMMAND_END>(&cl_error);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: command_queue.finish()\n");
-        }
-
-        double exec_time_ms = ((double)(end_time - start_time) / 1000000.0);
 
         return exec_time_ms;
     }

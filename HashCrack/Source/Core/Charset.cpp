@@ -168,7 +168,7 @@ namespace HonoursProject
 
             std::uint64_t pos = rank % cs.getSize();
 
-            result.push_back(cs.getChar(pos));
+            result.push_back(cs.getChar(static_cast<uint32_t>(pos)));
 
             rank = rank / cs.getSize();
         }

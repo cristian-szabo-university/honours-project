@@ -351,17 +351,17 @@ namespace HonoursProject
             throw std::runtime_error("ERROR: cl::Program()\n");
         }
 
-        build_opts.push_back("-cl-kernel-arg-info");
-        build_opts.push_back("-cl-std=CL1.1");
-
-        std::string options;
+        std::stringstream ss;
+        ss << "-D VECT_SIZE =" << device->getVectorWidth() << " ";
+        ss << "-cl-kernel-arg-info" << " ";
+        ss << "-cl-std=CL" << Platform::OPENCL_COMPILER_MAJOR_VERSION << "." << Platform::OPENCL_COMPILER_MINOR_VERSION << " ";
 
         for (auto opt : build_opts)
         {
-            options += (opt + " ");
+            ss << opt << " ";
         }
 
-        cl_error = program.build(options.c_str());
+        cl_error = program.build(ss.str().c_str());
 
         if (cl_error == CL_BUILD_PROGRAM_FAILURE)
         {

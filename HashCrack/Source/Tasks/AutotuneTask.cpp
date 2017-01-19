@@ -24,7 +24,10 @@ namespace HonoursProject
 
         std::uint32_t device_power_max = device->getMaxComputeUnits() * device->getMaxWorkGroupSize() * KernelPlatform::DEVICE_SPEED_MAX;
 
-        attack_task->getKernel()->setParam("msg", std::vector<KernelPlatform::message_t>(device_power_max));
+        KernelPlatform::message_t d;
+        memset(&d, 7, sizeof(d));
+
+        attack_task->getKernel()->setParam("msg", std::vector<KernelPlatform::message_t>(device_power_max, d));
         attack_task->getKernel()->setParam("msg_prefix", std::vector<KernelPlatform::message_prefix_t>(KernelPlatform::KERNEL_LOOPS_MAX));
 
         std::uint32_t device_speed = KernelPlatform::DEVICE_SPEED_MIN;

@@ -18,6 +18,22 @@ namespace HonoursProject
         address_qualifier(address_qualifier),
         access_qualifier(access_qualifier)
     {
+        if (this->type == "u8")
+        {
+            this->type = "uchar";
+        }
+        else if (this->type == "u16")
+        {
+            this->type = "ushort";
+        }
+        else if (this->type == "u32")
+        {
+            this->type = "uint";
+        }
+        else if (this->type == "u64")
+        {
+            this->type = "ulong";
+        }
     }
 
     KernelParam::~KernelParam()

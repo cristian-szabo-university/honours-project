@@ -30,6 +30,29 @@ namespace HonoursProject
         attack_task->getKernel()->setParam("msg", std::vector<KernelPlatform::message_t>(device_power_max, d));
         attack_task->getKernel()->setParam("msg_prefix", std::vector<KernelPlatform::message_prefix_t>(KernelPlatform::KERNEL_LOOPS_MAX));
 
+        double min_exec_time = std::numeric_limits<double>::max();
+        std::size_t vector_width = device->getVectorWidth();
+        std::shared_ptr<Program> program = attack_task->getKernel()->getProgram();
+
+        for (std::size_t vec_size = vector_width; vec_size < KernelPlatform::MAX_DEVICE_VECTOR_WIDTH; vec_size++)
+        {
+            program->recompile({ "-D VECT_SIZE=" + std::to_string(vec_size) });
+
+            double exec_time = try_execute(1, 1, 1.0);
+
+            for (std::size_t i = 0; i < Platform::AUTOTUNE_VALIDATE_CHECKS; i++)
+            {
+                double check_exec_time = try_execute(1, 1, 1.0);
+
+                exec_time = std::min(exec_time, check_exec_time);
+            }
+
+            if (exec_time < min_exec_time)
+            {
+                vector_width = vec_size;
+            }
+        }
+
         std::uint32_t device_speed = KernelPlatform::DEVICE_SPEED_MIN;
         std::uint32_t kernel_loops = KernelPlatform::KERNEL_LOOPS_MIN;
 
@@ -92,8 +115,8 @@ namespace HonoursProject
 
         for (std::size_t d = 1; d < 1024; d++)
         {
-            std::uint32_t device_speed_try = (float)device_speed_tmp * d;
-            std::uint32_t kernel_loops_try = (float)kernel_loops_tmp / d;
+            std::uint32_t device_speed_try = device_speed_tmp * d;
+            std::uint32_t kernel_loops_try = kernel_loops_tmp / d;
 
             if (device_speed_try > KernelPlatform::DEVICE_SPEED_MAX)
             {
@@ -140,14 +163,14 @@ namespace HonoursProject
 
         if (speed_ratio >= 1.0)
         {
-            device_speed = (double) device_speed * speed_ratio;
+            device_speed = device_speed * speed_ratio;
         }
 
         attack_task->setBatchSize(attack_task->getBatchSize() * device_speed);
         attack_task->setInnerLoopStep(kernel_loops);
     }
 
-    double AutotuneTask::try_execute(std::uint32_t device_speed, std::uint32_t kernel_loops)
+    double AutotuneTask::try_execute(std::uint32_t device_speed, std::uint32_t kernel_loops, double time_ratio)
     {
         std::shared_ptr<Device> device = attack_task->getDevice();
 
@@ -158,6 +181,6 @@ namespace HonoursProject
         kernel->setParam("msg_batch_size", device_power);
         kernel->setParam("inner_loop_size", kernel_loops);
 
-        return kernel->execute({ device_power, 1, 1 }, { device->getMaxWorkGroupSize(), 1, 1 });
+        return kernel->execute({ device_power, 1, 1 }, { device->getMaxWorkGroupSize(), 1, 1 }) / time_ratio;
     }
 }

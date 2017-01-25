@@ -30,6 +30,8 @@ namespace HonoursProject
 
         std::shared_ptr<Device> getDevice();
 
+        bool recompile(std::vector< std::string > build_opts = {});
+
         std::shared_ptr<Kernel> findKernel(const std::string& name);
 
         std::shared_ptr<KernelBuffer> createBuffer(std::shared_ptr<KernelParam> param);
@@ -40,7 +42,7 @@ namespace HonoursProject
 
         bool syncBuffer(std::shared_ptr<KernelBuffer> buffer);
 
-        double executeKernel(std::shared_ptr<Kernel> kernel, std::array<std::size_t, 3> global_size, std::array<std::size_t, 3> local_size, std::array<std::size_t, 3> offset_size = { 0, 0, 0 });
+        std::uint64_t executeKernel(std::shared_ptr<Kernel> kernel, std::array<std::size_t, 3> global_size, std::array<std::size_t, 3> local_size, std::array<std::size_t, 3> offset_size = { 0, 0, 0 });
 
         static std::shared_ptr<Program> Create(std::shared_ptr<Device> device, std::string source, std::vector< std::string > build_opts = {}, cl_command_queue_properties cmd_queue_props = 0);
 

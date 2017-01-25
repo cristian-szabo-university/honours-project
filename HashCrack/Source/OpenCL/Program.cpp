@@ -99,6 +99,11 @@ namespace HonoursProject
         return device;
     }
 
+    bool Program::recompile(std::vector<std::string> build_opts)
+    {
+        return false;
+    }
+
     std::shared_ptr<Kernel> Program::findKernel(const std::string & name)
     {
         auto kernel_iter = std::find_if(kernels.begin(), kernels.end(),
@@ -253,7 +258,7 @@ namespace HonoursProject
         return true;
     }
 
-    double Program::executeKernel(std::shared_ptr<Kernel> kernel, std::array<std::size_t, 3> global_size, std::array<std::size_t, 3> local_size, std::array<std::size_t, 3> offset_size)
+    std::uint64_t Program::executeKernel(std::shared_ptr<Kernel> kernel, std::array<std::size_t, 3> global_size, std::array<std::size_t, 3> local_size, std::array<std::size_t, 3> offset_size)
     {
         cl_int cl_error = CL_SUCCESS;
 
@@ -290,7 +295,7 @@ namespace HonoursProject
             throw std::runtime_error("ERROR: event.wait()\n");
         }
         
-        double exec_time_ms = 0.0;
+        std::uint64_t exec_time = 0;
 
         if (enable_profile)
         {
@@ -308,7 +313,7 @@ namespace HonoursProject
                 throw std::runtime_error("ERROR: command_queue.finish()\n");
             }
 
-            exec_time_ms = ((double)(end_time - start_time) / 1000000.0);
+            exec_time = end_time - start_time;
         }
 
         cl_error = command_queue.finish();
@@ -332,7 +337,7 @@ namespace HonoursProject
             }
         }
 
-        return exec_time_ms;
+        return exec_time;
     }
 
     std::shared_ptr<Program> Program::Create(std::shared_ptr<Device> device, std::string source, std::vector<std::string> build_opts, cl_command_queue_properties cmd_queue_props)
@@ -352,7 +357,7 @@ namespace HonoursProject
         }
 
         std::stringstream ss;
-        ss << "-D VECT_SIZE =" << device->getVectorWidth() << " ";
+        ss << "-D _unroll" << " ";
         ss << "-cl-kernel-arg-info" << " ";
         ss << "-cl-std=CL" << Platform::OPENCL_COMPILER_MAJOR_VERSION << "." << Platform::OPENCL_COMPILER_MINOR_VERSION << " ";
 

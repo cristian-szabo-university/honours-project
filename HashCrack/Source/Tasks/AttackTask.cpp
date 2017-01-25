@@ -75,13 +75,13 @@ namespace HonoursProject
 
             kernel_hash_crack->setParam("inner_loop_size", inner_loop_left);
 
-            double exec_time_ms = kernel_hash_crack->execute({ batch_size , 1, 1 }, { device->getMaxWorkGroupSize(), 1, 1 });
+            std::uint64_t exec_time = kernel_hash_crack->execute({ batch_size , 1, 1 }, { device->getMaxWorkGroupSize(), 1, 1 });
 
             auto speed_end_time = std::chrono::high_resolution_clock::now();
 
-            if (exec_time_ms > std::numeric_limits<double>::epsilon())
+            if (exec_time)
             {
-                exec_ms.push_front(exec_time_ms);
+                exec_ms.push_front(exec_time / 1000000.0);
 
                 if (exec_ms.size() > Platform::MAX_EXEC_CACHE_SIZE)
                 {

@@ -22,7 +22,7 @@ namespace HonoursProject
 
         double target_speed;
 
-        double try_execute(std::uint32_t device_speed, std::uint32_t kernel_loops);
+        double try_execute(std::uint32_t device_speed, std::uint32_t kernel_loops, double time_ratio = 1000000.0);
 
     };
 }

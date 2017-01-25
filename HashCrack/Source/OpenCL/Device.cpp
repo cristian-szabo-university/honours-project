@@ -123,7 +123,7 @@ namespace HonoursProject
 
         this->max_const_buffer_size = max_const_buffer_size;
 
-        cl_uint vector_width = device.getInfo<CL_DEVICE_NATIVE_VECTOR_WIDTH_INT>(&cl_error);
+        cl_uint vector_width = device.getInfo<CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT>(&cl_error);
 
         if (cl_error != CL_SUCCESS)
         {

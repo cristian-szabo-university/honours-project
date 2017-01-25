@@ -237,12 +237,12 @@ namespace HonoursProject
         return true;
     }
 
-    double Kernel::execute(std::size_t global_size, std::size_t local_size, std::size_t offset_size)
+    std::uint64_t Kernel::execute(std::size_t global_size, std::size_t local_size, std::size_t offset_size)
     {
         return execute({ global_size, 1, 1 }, { local_size, 1, 1 }, { offset_size, 0, 0 });
     }
 
-    double Kernel::execute(std::array<std::size_t, 3> global_size, std::array<std::size_t, 3> local_size, std::array<std::size_t, 3> offset_size)
+    std::uint64_t Kernel::execute(std::array<std::size_t, 3> global_size, std::array<std::size_t, 3> local_size, std::array<std::size_t, 3> offset_size)
     {
         return program->executeKernel(shared_from_this(), global_size, local_size, offset_size);
     }

@@ -182,9 +182,9 @@ namespace HonoursProject
 
         bool enableAutoSync(const std::string& name, bool flag = true);
 
-        double execute(std::size_t global_size, std::size_t local_size, std::size_t offset_size = 0);
+        std::uint64_t execute(std::size_t global_size, std::size_t local_size, std::size_t offset_size = 0);
 
-        double execute(std::array<std::size_t, 3> global_size, std::array<std::size_t, 3> local_size, std::array<std::size_t, 3> offset_size = { 0, 0, 0 });
+        std::uint64_t execute(std::array<std::size_t, 3> global_size, std::array<std::size_t, 3> local_size, std::array<std::size_t, 3> offset_size = { 0, 0, 0 });
 
         static std::shared_ptr<Kernel> Create(const std::string& name, std::shared_ptr<Program> program);
 

@@ -55,12 +55,10 @@ namespace HonoursProject
         for (auto& charset : charsets)
         {
             KernelPlatform::charset_t cs;
-
             memset(&cs, 0, sizeof(KernelPlatform::charset_t));
 
-            std::copy(charset.getData(), charset.getData() + charset.getSize(), cs.data);
-
             cs.size = charset.getSize();
+            std::copy(charset.getData(), charset.getData() + charset.getSize(), cs.data);
 
             css.push_back(cs);
         }
@@ -97,7 +95,7 @@ namespace HonoursProject
         std::uint32_t device_power = device->getMaxComputeUnits() * device->getMaxWorkGroupSize();
 
         std::vector< std::string > build_opts;
-        build_opts.push_back("-D _unroll");
+        build_opts.push_back("-D VECT_SIZE=" + std::to_string(device->getVectorWidth()));
 
         cl::Program::Sources program_sources;
         program_sources.push_back(std::make_pair(inc_hash_const.getData().c_str(), inc_hash_const.getData().size()));
@@ -107,13 +105,15 @@ namespace HonoursProject
         switch (hash_func)
         {
         case HashCracker::HashFunc::MD5:
-        {
-            program_sources.push_back(std::make_pair(bruteforce_md5.getData().c_str(), bruteforce_md5.getData().size()));
-        }
-        break;
+            {
+                program_sources.push_back(std::make_pair(bruteforce_md5.getData().c_str(), bruteforce_md5.getData().size()));
+            }
+            break;
 
         case HashCracker::HashFunc::SHA1:
-            throw std::runtime_error("Error: Hash function not implemented yet!");
+            {
+                throw std::runtime_error("Error: Hash function not implemented yet!");
+            }
             break;
         }
 

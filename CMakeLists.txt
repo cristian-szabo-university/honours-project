@@ -6,6 +6,8 @@ cmake_minimum_required (VERSION 3.2)
 #
 ###############################################################################
 
+include (ExternalProject)
+
 project (HonoursProject VERSION 1.0.0)
 
 if (${PROJECT_SOURCE_DIR} STREQUAL ${PROJECT_BINARY_DIR})
@@ -32,6 +34,69 @@ set (CONFIG_INSTALL_DIR "CMake")
 #   PROJECTS
 #
 ###############################################################################
+
+ExternalProject_Add (
+    OpenCL-Headers
+
+    PREFIX "OpenCL-Headers"
+    GIT_REPOSITORY "https://github.com/KhronosGroup/OpenCL-Headers"
+    GIT_TAG "opencl21"
+
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/Extern/OpenCL-Headers"
+    BINARY_DIR "${CMAKE_BINARY_DIR}/Extern/OpenCL-Headers"   
+    
+    CONFIGURE_COMMAND "" 
+    UPDATE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+)
+
+ExternalProject_Add (
+    OpenCL-CPP-Header
+    
+    PREFIX "OpenCL-CPP-Header"
+    URL "https://www.khronos.org/registry/cl/api/2.1/cl.hpp"
+    DOWNLOAD_NO_EXTRACT 0
+    
+    DOWNLOAD_DIR "${CMAKE_SOURCE_DIR}/Extern/OpenCL-CPP-Header"
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/Extern/OpenCL-CPP-Header"
+    BINARY_DIR "${CMAKE_BINARY_DIR}/Extern/OpenCL-CPP-Header"
+    
+    CONFIGURE_COMMAND "" 
+    UPDATE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+)
+
+ExternalProject_Add(
+    OpenCL-ICD-Loader
+
+    DEPENDS OpenCL-Headers OpenCL-CPP-Header
+    
+    PREFIX "OpenCL-ICD-Loader"
+    GIT_REPOSITORY "https://github.com/KhronosGroup/OpenCL-ICD-Loader"
+    GIT_TAG "master"
+    
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/Extern/OpenCL-ICD-Loader"
+    BINARY_DIR "${CMAKE_BINARY_DIR}/Extern/OpenCL-ICD-Loader"
+        
+    INSTALL_COMMAND ""
+    UPDATE_COMMAND ""
+)
+
+ExternalProject_Add_Step(OpenCL-ICD-Loader copy_opencl_header_files
+	COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/Extern/OpenCL-Headers" "${CMAKE_SOURCE_DIR}/Extern/OpenCL-ICD-Loader/inc/CL"
+	DEPENDERS build
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+	LOG 1
+) 
+
+ExternalProject_Add_Step(OpenCL-ICD-Loader copy_opencl_hpp_file
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/Extern/OpenCL-CPP-Header/cl.hpp" "${CMAKE_SOURCE_DIR}/Extern/OpenCL-ICD-Loader/inc/CL/cl.hpp"
+	DEPENDERS build
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+	LOG 1
+) 
 
 add_subdirectory ("${CMAKE_SOURCE_DIR}/HashCrack")
 add_subdirectory ("${CMAKE_SOURCE_DIR}/HashApp")

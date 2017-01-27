@@ -1,18 +1,20 @@
 project (HashCrack VERSION 1.0.0)
 
+include (ExternalProject)
 include (GenerateExportHeader)
 
-set(THREADS_PREFER_PTHREAD_FLAG ON)
+set (THREADS_PREFER_PTHREAD_FLAG ON)
 
-find_package(Threads REQUIRED)
+find_package (Threads REQUIRED)
 
-find_package (OpenCL 1.1 REQUIRED)
+ExternalProject_Get_Property (OpenCL-ICD-Loader SOURCE_DIR)
+ExternalProject_Get_Property (OpenCL-ICD-Loader BINARY_DIR)
 
 add_library (OpenCL STATIC IMPORTED)
-
 set_target_properties (OpenCL PROPERTIES
-	IMPORTED_LOCATION ${OpenCL_LIBRARIES}
-	INTERFACE_INCLUDE_DIRECTORIES ${OpenCL_INCLUDE_DIRS})
+	IMPORTED_LOCATION "${CMAKE_STATIC_LIBRARY_PREFIX}OpenCL${CMAKE_STATIC_LIBRARY_SUFFIX}")
+
+include_directories ("${SOURCE_DIR}/inc")
 
 add_custom_command (
     OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/Source/ProgramEntry.cpp" "${CMAKE_CURRENT_BINARY_DIR}/Include/ProgramEntry.hpp"
@@ -100,6 +102,8 @@ source_group ("Source\\OpenCL" FILES ${OPENCL_SOURCE_FILES})
 source_group ("Source\\Tasks" FILES ${TASKS_SOURCE_FILES})
 
 add_library (${PROJECT_NAME} SHARED ${HASHCRACK_HEADER_FILES} ${HASHCRACK_SOURCE_FILES})
+
+add_dependencies (${PROJECT_NAME} OpenCL-ICD-Loader)
 
 target_link_libraries (${PROJECT_NAME} PUBLIC OpenCL Threads::Threads)
 

@@ -1,22 +1,11 @@
 project (HashCrack VERSION 1.0.0)
 
-include (ExternalProject)
 include (GenerateExportHeader)
 
 set (THREADS_PREFER_PTHREAD_FLAG ON)
 
 find_package (Threads REQUIRED)
 
-ExternalProject_Get_Property (OpenCL-ICD-Loader SOURCE_DIR)
-ExternalProject_Get_Property (OpenCL-ICD-Loader BINARY_DIR)
-
-add_library (OpenCL STATIC IMPORTED)
-set_target_properties (OpenCL PROPERTIES
-	IMPORTED_LOCATION "${BINARY_DIR}/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}OpenCL${CMAKE_STATIC_LIBRARY_SUFFIX}"
-    INTERFACE_INCLUDE_DIRECTORIES "${SOURCE_DIR}/inc")
-
-file(MAKE_DIRECTORY "${SOURCE_DIR}/inc")
-    
 add_custom_command (
     OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/Source/ProgramEntry.cpp" "${CMAKE_CURRENT_BINARY_DIR}/Include/ProgramEntry.hpp"
     COMMAND ${CMAKE_COMMAND} "-DCL_DIR=${CMAKE_CURRENT_SOURCE_DIR}/OpenCL" "-DFILE_OUT=ProgramEntry.cpp" "-DDIR_OUT=${CMAKE_CURRENT_BINARY_DIR}" -P "${CMAKE_SOURCE_DIR}/CMake/cl2cpp.cmake")

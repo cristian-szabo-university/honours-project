@@ -13,6 +13,10 @@ addons:
         - mesa-common-dev
         - g++-5
 
+install:
+    - export CXX=g++-5
+    - export CC=gcc-5
+
 before_script:
     - cmake -G "Unix Makefiles" -DCMAKE_CXX_FLAGS="-std=c++11" -DCMAKE_INSTALL_PREFIX="$TRAVIS_BUILD_DIR/Install" -B./Build -H./
     

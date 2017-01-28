@@ -5,17 +5,23 @@ compiler: g++-5
 addons:
   apt:
     sources:
-        - sourceline: 'ppa:george-edison55/precise-backports'
         - ubuntu-toolchain-r-test
     packages:
-        - cmake-data
-        - cmake
         - mesa-common-dev
         - g++-5
 
 install:
-    - export CXX=g++-5
-    - export CC=gcc-5
+    - |
+        if [ "$CXX" = "g++" ]; then 
+            export CXX="g++-5" CC="gcc-5"; 
+        fi
+    - |
+        if [[ ${TRAVIS_OS_NAME} == "linux" ]]; then
+            CMAKE_URL="https://cmake.org/files/v3.7/cmake-3.7.2-Linux-x86_64.tar.gz"
+            mkdir -p tmp/cmake
+            travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C tmp/cmake
+            export PATH=tmp/cmake/bin:${PATH}
+        fi
 
 before_script:
     - cmake -G "Unix Makefiles" -DCMAKE_CXX_FLAGS="-std=c++11" -DCMAKE_INSTALL_PREFIX="$TRAVIS_BUILD_DIR/Install" -B./Build -H./

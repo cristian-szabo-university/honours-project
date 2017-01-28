@@ -1,11 +1,5 @@
 #pragma once
 
-#if defined(__APPLE__)
-#   include <OpenCL/cl.hpp>
-#else
-#   include <CL/cl.hpp>
-#endif
-
 namespace HonoursProject
 {
     class KernelBuffer;

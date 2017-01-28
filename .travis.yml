@@ -1,1 +1,29 @@
+sudo: false
+language: cpp
+compiler: g++-5
 
+addons:
+  apt:
+    sources:
+        - sourceline: 'ppa:george-edison55/precise-backports'
+        - sourceline: 'ubuntu-toolchain-r-test'
+    packages:
+        - cmake
+        - mesa-common-dev
+
+before_script:
+    - cmake -G "Unix Makefiles" -DCMAKE_CXX_FLAGS="-std=c++11" -DCMAKE_INSTALL_PREFIX="$TRAVIS_BUILD_DIR/Install" -B./Build -H./
+    
+script:    
+    - cmake --build ./Build --target all
+    
+after_script:
+    - cmake --build ./Build --target package
+
+deploy:
+    provider: releases
+    api_key: "ada3ad1ee68bd8bc9d94f08c3824ca7f00472f06"
+    file: $TRAVIS_BUILD_DIR/build/app/CodeTestApp
+    skip_cleanup: true
+    on:
+        tags: true

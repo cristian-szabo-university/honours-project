@@ -6,7 +6,7 @@ addons:
   apt:
     sources:
         - sourceline: 'ppa:george-edison55/precise-backports'
-        - sourceline: 'ubuntu-toolchain-r-test'
+        - ubuntu-toolchain-r-test
     packages:
         - cmake
         - mesa-common-dev

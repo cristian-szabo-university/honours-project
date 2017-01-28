@@ -85,14 +85,8 @@ ExternalProject_Add (
     UPDATE_COMMAND ""
 )
 
-ExternalProject_Add_Step (OpenCL-ICD-Loader copy_opencl_h_file
-	COMMAND ${CMAKE_COMMAND} -E copy_directory "${EXTERN_SOURCE_DIR}/OpenCL-Headers" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL"
-	DEPENDEES update
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-	LOG 1
-)
-
-ExternalProject_Add_Step (OpenCL-ICD-Loader copy_opencl_hpp_file
+ExternalProject_Add_Step (OpenCL-ICD-Loader copy_opencl_header_files
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${EXTERN_SOURCE_DIR}/OpenCL-Headers" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL"
 	COMMAND ${CMAKE_COMMAND} "-DREMOTE=https://www.khronos.org/registry/cl/api/2.1/cl.hpp" "-DLOCAL=${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl.hpp" -P "${CMAKE_SOURCE_DIR}/CMake/DownloadFile.cmake"
 	DEPENDEES update
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}

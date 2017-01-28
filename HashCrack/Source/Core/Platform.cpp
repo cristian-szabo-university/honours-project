@@ -6,6 +6,14 @@
 
 namespace HonoursProject
 {
+    const std::size_t KernelPlatform::MAX_KERNEL_WORK_GROUP = 256;
+    const std::size_t KernelPlatform::DEVICE_SPEED_MIN = 1;
+    const std::size_t KernelPlatform::DEVICE_SPEED_MAX = 1024;
+    const std::size_t KernelPlatform::KERNEL_LOOPS_MIN = 1;
+    const std::size_t KernelPlatform::KERNEL_LOOPS_MAX = 1024;
+    const std::size_t KernelPlatform::MAX_DEVICE_VECTOR_WIDTH = 16;
+    const std::uint32_t KernelPlatform::MAX_MESSAGE_PREFIX = 1024;
+
     std::vector< std::shared_ptr<KernelBuffer> > KernelPlatform::data_types =
     {
         std::dynamic_pointer_cast<KernelBuffer>(std::make_shared<TKernelBuffer<cl_bool>>()),

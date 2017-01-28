@@ -33,16 +33,13 @@ namespace HonoursProject
     {
     public:
 
-        static const std::size_t MAX_KERNEL_WORK_GROUP = 256;
-
-        static const std::size_t DEVICE_SPEED_MIN = 1;
-        static const std::size_t DEVICE_SPEED_MAX = 1024;
-
-        static const std::size_t KERNEL_LOOPS_MIN = 1;
-        static const std::size_t KERNEL_LOOPS_MAX = 1024;
-
-        static const std::size_t MAX_DEVICE_VECTOR_WIDTH = 16;
-        static const std::uint32_t MAX_MESSAGE_PREFIX = 1024;
+        static const std::size_t MAX_KERNEL_WORK_GROUP;
+        static const std::size_t DEVICE_SPEED_MIN;
+        static const std::size_t DEVICE_SPEED_MAX;
+        static const std::size_t KERNEL_LOOPS_MIN;
+        static const std::size_t KERNEL_LOOPS_MAX;
+        static const std::size_t MAX_DEVICE_VECTOR_WIDTH;
+        static const std::uint32_t MAX_MESSAGE_PREFIX;
 
 #pragma pack(push, 1)
         typedef struct

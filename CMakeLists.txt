@@ -35,6 +35,20 @@ set (CONFIG_INSTALL_DIR "CMake")
 #
 ###############################################################################
 
+ExternalProject_Add(
+    Docopt
+
+    PREFIX "Docopt"
+    GIT_REPOSITORY "https://github.com/docopt/docopt.cpp.git"
+    GIT_TAG "master"
+  
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/Extern/Docopt"
+    BINARY_DIR "${CMAKE_BINARY_DIR}/Extern/Docopt"   
+    
+    UPDATE_COMMAND ""
+    INSTALL_COMMAND ""
+)
+
 ExternalProject_Add (
     OpenCL-Headers
 
@@ -86,14 +100,14 @@ ExternalProject_Add(
 
 ExternalProject_Add_Step(OpenCL-ICD-Loader copy_opencl_header_files
 	COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/Extern/OpenCL-Headers" "${CMAKE_SOURCE_DIR}/Extern/OpenCL-ICD-Loader/inc/CL"
-	DEPENDERS build
+	DEPENDERS configure
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	LOG 1
 ) 
 
 ExternalProject_Add_Step(OpenCL-ICD-Loader copy_opencl_hpp_file
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/Extern/OpenCL-CPP-Header/cl.hpp" "${CMAKE_SOURCE_DIR}/Extern/OpenCL-ICD-Loader/inc/CL/cl.hpp"
-	DEPENDERS build
+	DEPENDERS configure
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	LOG 1
 ) 

@@ -74,21 +74,9 @@ ExternalProject_Add (
 )
 
 ExternalProject_Add (
-    OpenCL-CPP-Header
-    
-    URL "https://www.khronos.org/registry/cl/api/2.1/cl.hpp"
-    DOWNLOAD_NO_EXTRACT 0
-    
-    CONFIGURE_COMMAND "" 
-    UPDATE_COMMAND ""
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
-)
-
-ExternalProject_Add (
     OpenCL-ICD-Loader
 
-    DEPENDS OpenCL-Headers OpenCL-CPP-Header
+    DEPENDS OpenCL-Headers
     
     GIT_REPOSITORY "https://github.com/KhronosGroup/OpenCL-ICD-Loader"
     GIT_TAG "master"
@@ -105,7 +93,7 @@ ExternalProject_Add_Step (OpenCL-ICD-Loader copy_opencl_h_file
 )
 
 ExternalProject_Add_Step (OpenCL-ICD-Loader copy_opencl_hpp_file
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_DOWNLOAD_DIR}/OpenCL-CPP-Header/cl.hpp" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl.hpp"
+	COMMAND ${CMAKE_COMMAND} "-DREMOTE=https://www.khronos.org/registry/cl/api/2.1/cl.hpp" "-DLOCAL=${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl.hpp" -P "${CMAKE_SOURCE_DIR}/CMake/DownloadFile.cmake"
 	DEPENDEES update
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	LOG 1

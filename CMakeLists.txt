@@ -99,7 +99,8 @@ ExternalProject_Add (
 
 ExternalProject_Add_Step (OpenCL-ICD-Loader copy_opencl_header_files
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl.h"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl_platform.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl_platform.h"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/opencl.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/opencl.h"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl_platform.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl_platform.h" 
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl_ext.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl_ext.h"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl_gl.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl_gl.h"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl_gl_ext.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl_gl_ext.h"

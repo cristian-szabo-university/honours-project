@@ -6,9 +6,9 @@ cmake_minimum_required (VERSION 3.2)
 #
 ###############################################################################
 
-include (ExternalProject)
-
 project (HonoursProject VERSION 1.0.0)
+
+include (ExternalProject)
 
 if (${PROJECT_SOURCE_DIR} STREQUAL ${PROJECT_BINARY_DIR})
 	message(FATAL_ERROR "In-tree builds are not supported; please run cmake in a separate build directory.")
@@ -31,33 +31,41 @@ set (CONFIG_INSTALL_DIR "CMake")
 
 ###############################################################################
 #
-#   PROJECTS
+#   EXTERN PROJECTS
 #
 ###############################################################################
 
-ExternalProject_Add(
+set (EXTERN_BASE_DIR "${CMAKE_BINARY_DIR}/Extern")
+set (EXTERN_DOWNLOAD_DIR "${EXTERN_BASE_DIR}/Download")
+set (EXTERN_INSTALL_DIR "${EXTERN_BASE_DIR}/Install")
+set (EXTERN_SOURCE_DIR "${EXTERN_BASE_DIR}/Source")
+set (EXTERN_BINARY_DIR "${EXTERN_BASE_DIR}/Build")
+
+set_directory_properties (PROPERTIES EP_BASE ${EXTERN_BASE_DIR})
+
+ExternalProject_Add (
     Docopt
 
-    PREFIX "Docopt"
     GIT_REPOSITORY "https://github.com/docopt/docopt.cpp.git"
-    GIT_TAG "master"
-  
-    SOURCE_DIR "${CMAKE_SOURCE_DIR}/Extern/Docopt"
-    BINARY_DIR "${CMAKE_BINARY_DIR}/Extern/Docopt"   
+    GIT_TAG "master"  
     
     UPDATE_COMMAND ""
     INSTALL_COMMAND ""
 )
 
+ExternalProject_Get_Property (Docopt SOURCE_DIR)
+ExternalProject_Get_Property (Docopt BINARY_DIR)
+
+add_library (docopt STATIC IMPORTED)
+set_target_properties (docopt PROPERTIES
+	IMPORTED_LOCATION "${BINARY_DIR}/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}docopt_s${CMAKE_STATIC_LIBRARY_SUFFIX}"
+    INTERFACE_INCLUDE_DIRECTORIES "${SOURCE_DIR}")
+
 ExternalProject_Add (
     OpenCL-Headers
 
-    PREFIX "OpenCL-Headers"
     GIT_REPOSITORY "https://github.com/KhronosGroup/OpenCL-Headers"
     GIT_TAG "opencl21"
-
-    SOURCE_DIR "${CMAKE_SOURCE_DIR}/Extern/OpenCL-Headers"
-    BINARY_DIR "${CMAKE_BINARY_DIR}/Extern/OpenCL-Headers"   
     
     CONFIGURE_COMMAND "" 
     UPDATE_COMMAND ""
@@ -68,13 +76,8 @@ ExternalProject_Add (
 ExternalProject_Add (
     OpenCL-CPP-Header
     
-    PREFIX "OpenCL-CPP-Header"
     URL "https://www.khronos.org/registry/cl/api/2.1/cl.hpp"
     DOWNLOAD_NO_EXTRACT 0
-    
-    DOWNLOAD_DIR "${CMAKE_SOURCE_DIR}/Extern/OpenCL-CPP-Header"
-    SOURCE_DIR "${CMAKE_SOURCE_DIR}/Extern/OpenCL-CPP-Header"
-    BINARY_DIR "${CMAKE_BINARY_DIR}/Extern/OpenCL-CPP-Header"
     
     CONFIGURE_COMMAND "" 
     UPDATE_COMMAND ""
@@ -82,35 +85,47 @@ ExternalProject_Add (
     INSTALL_COMMAND ""
 )
 
-ExternalProject_Add(
+ExternalProject_Add (
     OpenCL-ICD-Loader
 
     DEPENDS OpenCL-Headers OpenCL-CPP-Header
     
-    PREFIX "OpenCL-ICD-Loader"
     GIT_REPOSITORY "https://github.com/KhronosGroup/OpenCL-ICD-Loader"
     GIT_TAG "master"
     
-    SOURCE_DIR "${CMAKE_SOURCE_DIR}/Extern/OpenCL-ICD-Loader"
-    BINARY_DIR "${CMAKE_BINARY_DIR}/Extern/OpenCL-ICD-Loader"
-        
     INSTALL_COMMAND ""
     UPDATE_COMMAND ""
 )
 
-ExternalProject_Add_Step(OpenCL-ICD-Loader copy_opencl_header_files
-	COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/Extern/OpenCL-Headers" "${CMAKE_SOURCE_DIR}/Extern/OpenCL-ICD-Loader/inc/CL"
-	DEPENDERS configure
+ExternalProject_Add_Step (OpenCL-ICD-Loader copy_opencl_h_file
+	COMMAND ${CMAKE_COMMAND} -E copy_directory "${EXTERN_SOURCE_DIR}/OpenCL-Headers" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL"
+	DEPENDEES update
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+	LOG 1
+)
+
+ExternalProject_Add_Step (OpenCL-ICD-Loader copy_opencl_hpp_file
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_DOWNLOAD_DIR}/OpenCL-CPP-Header/cl.hpp" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl.hpp"
+	DEPENDEES update
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 	LOG 1
 ) 
 
-ExternalProject_Add_Step(OpenCL-ICD-Loader copy_opencl_hpp_file
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/Extern/OpenCL-CPP-Header/cl.hpp" "${CMAKE_SOURCE_DIR}/Extern/OpenCL-ICD-Loader/inc/CL/cl.hpp"
-	DEPENDERS configure
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-	LOG 1
-) 
+ExternalProject_Get_Property (OpenCL-ICD-Loader SOURCE_DIR)
+ExternalProject_Get_Property (OpenCL-ICD-Loader BINARY_DIR)
+
+file(MAKE_DIRECTORY "${SOURCE_DIR}/inc")
+
+add_library (OpenCL STATIC IMPORTED)
+set_target_properties (OpenCL PROPERTIES
+	IMPORTED_LOCATION "${BINARY_DIR}/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}OpenCL${CMAKE_STATIC_LIBRARY_SUFFIX}"
+    INTERFACE_INCLUDE_DIRECTORIES "${SOURCE_DIR}/inc")
+
+###############################################################################
+#
+#   INTERN PROJECTS
+#
+###############################################################################
 
 add_subdirectory ("${CMAKE_SOURCE_DIR}/HashCrack")
 add_subdirectory ("${CMAKE_SOURCE_DIR}/HashApp")

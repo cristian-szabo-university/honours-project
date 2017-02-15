@@ -95,12 +95,13 @@ namespace HonoursProject
         std::uint32_t device_power = device->getMaxComputeUnits() * device->getMaxWorkGroupSize();
 
         std::vector< std::string > build_opts;
-        build_opts.push_back("-D VECT_SIZE=" + std::to_string(device->getVectorWidth()));
+        build_opts.push_back("-DVECT_SIZE=" + std::to_string(device->getVectorWidth()));
 
         cl::Program::Sources program_sources;
         program_sources.push_back(std::make_pair(inc_hash_const.getData().c_str(), inc_hash_const.getData().size()));
         program_sources.push_back(std::make_pair(inc_hash_func.getData().c_str(), inc_hash_func.getData().size()));
         program_sources.push_back(std::make_pair(inc_types.getData().c_str(), inc_types.getData().size()));
+        program_sources.push_back(std::make_pair(inc_comp.getData().c_str(), inc_comp.getData().size()));
 
         switch (hash_func)
         {

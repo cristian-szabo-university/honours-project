@@ -173,13 +173,13 @@ void crack_md5(
         MD5_STEP(MD5_H, d, a, b, c, w0, H_w0c29, MD5_ROUND_3_SHIFT_2);       /* 42= */
         MD5_STEP_FAST(MD5_H, c, d, a, b, H_w3c2a, MD5_ROUND_3_SHIFT_3);      /* 43 */
 
-        if (!((pre_c) == (c))) continue;
+        if (NOT_EQUAL_VECTOR(pre_c,c)) continue;
 
         MD5_STEP_FAST(MD5_H, b, c, d, a, H_w6c2b, MD5_ROUND_3_SHIFT_4);      /* 44 */
         MD5_STEP_FAST(MD5_H, a, b, c, d, H_w9c2c, MD5_ROUND_3_SHIFT_1);      /* 45 */
         MD5_STEP_FAST(MD5_H, d, a, b, c, H_wcc2d, MD5_ROUND_3_SHIFT_2);      /* 46 */
 
-        if (!((pre_d) == (d))) continue;
+        if (NOT_EQUAL_VECTOR(pre_d,d)) continue;
 
         MD5_STEP_FAST(MD5_H, c, d, a, b, H_wfc2e, MD5_ROUND_3_SHIFT_3);      /* 47 */
         MD5_STEP_FAST(MD5_H, b, c, d, a, H_w2c2f, MD5_ROUND_3_SHIFT_4);      /* 48 */
@@ -198,20 +198,13 @@ void crack_md5(
         MD5_STEP_FAST(MD5_I, b, c, d, a, I_wdc3b, MD5_ROUND_4_SHIFT_4);      /* 60 */
         MD5_STEP_FAST(MD5_I, a, b, c, d, I_w4c3c, MD5_ROUND_4_SHIFT_1);      /* 61 */
 
-        if (!((a) == search[0])) continue;
+        if (NOT_EQUAL_SCALAR(a,search[0])) continue;
 
         MD5_STEP_FAST(MD5_I, d, a, b, c, I_wbc3d, MD5_ROUND_4_SHIFT_2);      /* 62 */
         MD5_STEP_FAST(MD5_I, c, d, a, b, I_w2c3e, MD5_ROUND_4_SHIFT_3);      /* 63 */
         MD5_STEP_FAST(MD5_I, b, c, d, a, I_w9c3f, MD5_ROUND_4_SHIFT_4);      /* 64 */
 
-        if (((b) == search[1]) && ((c) == search[2]) && ((d) == search[3]))
-        {
-            msg_index[0].found = 1;
-            msg_index[0].msg_batch_pos = msg_batch_pos;
-            msg_index[0].inner_loop_pos = inner_loop_pos;
-
-            break;
-        }
+        COMPARE_DIGEST(a,b,c,d);
     }
 }
 

@@ -5,7 +5,7 @@ typedef ushort u16;
 typedef uint   u32;
 typedef ulong  u64;
 
-#define CONCAT_NAME(a, b)       a##b
+#define CONCAT_NAME(a, b) a##b
 #define VECT_TYPE(type, width) CONCAT_NAME(type, width)
 
 #if (VECT_SIZE == 1)

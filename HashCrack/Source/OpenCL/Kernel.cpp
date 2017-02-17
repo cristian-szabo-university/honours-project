@@ -76,8 +76,6 @@ namespace HonoursProject
                 continue;
             }
 
-            params.push_back(kernel_param);
-
             std::shared_ptr<KernelBuffer> kernel_buffer = program->createBuffer(kernel_param);
 
             if (!kernel_buffer)
@@ -89,6 +87,8 @@ namespace HonoursProject
             {
                 continue;
             }
+
+            params.push_back(kernel_param);
 
             buffers.insert(std::make_pair(kernel_param->getName(), kernel_buffer));
         }
@@ -282,5 +282,17 @@ namespace HonoursProject
         }
 
         return (*param_iter);
+    }
+
+    std::shared_ptr<KernelBuffer> Kernel::getBuffer(const std::string & name)
+    {
+        auto iter = buffers.find(name);
+
+        if (iter == buffers.end())
+        {
+            return std::shared_ptr<KernelBuffer>();
+        }
+
+        return iter->second;
     }
 }

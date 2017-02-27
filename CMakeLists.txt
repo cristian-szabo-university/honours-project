@@ -132,8 +132,8 @@ set_target_properties (OpenCL PROPERTIES
 #
 ###############################################################################
 
-add_subdirectory ("${CMAKE_SOURCE_DIR}/HashCrack")
-add_subdirectory ("${CMAKE_SOURCE_DIR}/HashApp")
+add_subdirectory ("${CMAKE_SOURCE_DIR}/HashCracker")
+add_subdirectory ("${CMAKE_SOURCE_DIR}/PasswordRecovery")
 
 ###############################################################################
 #

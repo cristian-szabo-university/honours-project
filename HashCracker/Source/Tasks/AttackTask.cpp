@@ -132,7 +132,7 @@ namespace HonoursProject
 
     void AttackTask::setBatchOffset(std::uint64_t batch_offset)
     {
-        batch_offset = batch_offset;
+        this->batch_offset = batch_offset;
 
         kernel_hash_crack->setParam("msg_batch_offset", batch_offset);
     }

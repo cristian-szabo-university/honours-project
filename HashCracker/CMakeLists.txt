@@ -24,6 +24,7 @@ set (CORE_HEADER_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Include/Core/Charset.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Include/Core/Logger.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Include/Core/Platform.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Include/Core/HashFunc.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Include/Core/HashCracker.hpp)
 
 set (OPENCL_HEADER_FILES
@@ -61,6 +62,7 @@ set (CORE_SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Source/Core/Charset.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Source/Core/Logger.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Source/Core/Platform.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Source/Core/HashFunc.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Source/Core/HashCracker.cpp)
 
 set (OPENCL_SOURCE_FILES

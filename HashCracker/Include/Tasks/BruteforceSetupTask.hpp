@@ -12,7 +12,7 @@ namespace HonoursProject
     {
     public:
 
-        BruteforceSetupTask(std::shared_ptr<HashCracker> hash_cracker, std::shared_ptr<Device> device, const std::string& hash_msg, HashCracker::HashFunc hash_func, const std::string& mask);
+        BruteforceSetupTask(std::shared_ptr<HashCracker> hash_cracker, std::shared_ptr<Device> device, const std::string& hash_msg, std::shared_ptr<HashFunc> hash_func, const std::string& mask);
 
         virtual ~BruteforceSetupTask();
 

@@ -14,7 +14,6 @@ get_filename_component(FILE_HPP_OUT_NAME "${FILE_HPP_OUT}" NAME)
 
 set(STR_CPP 
 "// This file is auto-generated. Do not edit!
-#include \"Config.hpp\"
 #include \"${FILE_HPP_OUT_NAME}\"
 
 namespace HonoursProject
@@ -48,7 +47,7 @@ set(STR_HPP
 
 namespace HonoursProject
 {
-    class HASHCRACK_PUBLIC ProgramEntry
+    class ProgramEntry
     {
     public:
 
@@ -94,7 +93,7 @@ foreach(cl ${cl_list})
 
     set(STR_CPP_DECL "\n    const ProgramEntry ${cl_filename}\n    (\n    \"${cl_filename}\",\n    \"${lines},\n    \"${hash}\");\n\n")
     
-    set(STR_HPP_DECL "\n    HASHCRACK_PUBLIC extern const ProgramEntry ${cl_filename};\n")
+    set(STR_HPP_DECL "\n    extern const ProgramEntry ${cl_filename};\n")
 
     set(STR_CPP "${STR_CPP}${STR_CPP_DECL}")
     set(STR_HPP "${STR_HPP}${STR_HPP_DECL}")

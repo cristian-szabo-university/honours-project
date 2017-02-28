@@ -6,6 +6,7 @@ namespace HonoursProject
 {
     class WorkDispatchTask;
     class Device;
+    class HashFunc;
 
     class HASHCRACK_PUBLIC HashCracker : public std::enable_shared_from_this<HashCracker>
     {
@@ -30,14 +31,6 @@ namespace HonoursProject
             MaxCount
         };
 
-        enum class HashFunc : std::int32_t
-        {
-            Invalid = -1,
-            MD5,
-            SHA1,
-            MaxCount
-        };
-
         enum class DeviceFilter : std::int32_t
         {
             Invalid = -1,
@@ -47,13 +40,15 @@ namespace HonoursProject
             MaxCount
         };
 
-        HashCracker(const std::string& hash_msg, HashFunc hash_func, bool benchmark);
+        HashCracker(const std::string& hash_msg, std::shared_ptr<HashFunc> hash_func, bool benchmark);
 
         ~HashCracker();
 
         void setStatus(Status status);
 
         Status getStatus();
+
+        bool benchmarkEnable();
 
         std::string getHashMsg();
 
@@ -89,7 +84,7 @@ namespace HonoursProject
 
         std::string plain_msg;
 
-        HashFunc hash_func;
+        std::shared_ptr<HashFunc> hash_func;
 
         std::uint64_t total_message_count;
 

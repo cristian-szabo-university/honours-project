@@ -4,6 +4,7 @@
 
 #include "Core/Logger.hpp"
 #include "Core/Charset.hpp"
+#include "Core/HashFunc.hpp"
 
 #include "OpenCL/Device.hpp"
 
@@ -15,17 +16,12 @@
 
 namespace HonoursProject
 {
-    HashCracker::HashCracker(const std::string& hash_msg, HashFunc hash_func, bool benchmark)
+    HashCracker::HashCracker(const std::string& hash_msg, std::shared_ptr<HashFunc> hash_func, bool benchmark)
         : hash_msg(hash_msg), hash_func(hash_func), benchmark(benchmark), status(HashCracker::Status::Idle)
     {
         if (hash_msg.empty())
         {
             throw std::runtime_error("Error: Hash message can't be empty!");
-        }
-
-        if (hash_func == HashFunc::Invalid || hash_func > HashFunc::MaxCount)
-        {
-            throw std::runtime_error("Error: Invalid hash function!");
         }
     }
 
@@ -43,6 +39,11 @@ namespace HonoursProject
         return status;
     }
 
+    bool HashCracker::benchmarkEnable()
+    {
+        return benchmark;
+    }
+
     std::string HashCracker::getHashMsg()
     {
         return hash_msg;
@@ -52,13 +53,13 @@ namespace HonoursProject
     {
         std::string result;
 
-        switch (hash_func)
+        switch (hash_func->type())
         {
-        case HonoursProject::HashCracker::HashFunc::MD5:
+        case HashFunc::Type::MD5:
             result = "MD5";
             break;
 
-        case HonoursProject::HashCracker::HashFunc::SHA1:
+        case HashFunc::Type::SHA1:
             result = "SHA1";
             break;
 

@@ -12,9 +12,11 @@
 
 #include "Tasks/BruteforceAttackTask.hpp"
 
+#include "Core/HashFunc.hpp"
+
 namespace HonoursProject
 {
-    BruteforceSetupTask::BruteforceSetupTask(std::shared_ptr<HashCracker> hash_cracker, std::shared_ptr<Device> device, const std::string & hash_msg, HashCracker::HashFunc hash_func, const std::string & mask)
+    BruteforceSetupTask::BruteforceSetupTask(std::shared_ptr<HashCracker> hash_cracker, std::shared_ptr<Device> device, const std::string & hash_msg, std::shared_ptr<HashFunc> hash_func, const std::string & mask)
         : SetupTask(hash_cracker, device, hash_msg, hash_func)
     {
         charsets = Charset::Create(mask);
@@ -27,30 +29,9 @@ namespace HonoursProject
     std::shared_ptr<AttackTask> BruteforceSetupTask::run()
     {
         std::vector<KernelPlatform::charset_t> css;
-        std::vector<KernelPlatform::message_digest_t> msg_dgst;
-        std::uint32_t mask;
-        std::uint32_t bit14;
-        std::uint32_t bit15;
+        std::vector<KernelPlatform::message_digest_t> msg_dgst(1);
 
-        switch (hash_func)
-        {
-        case HashCracker::HashFunc::MD5:
-        {
-            msg_dgst.push_back(parseMD5Hash(hash_msg));
-
-            mask = 0x80808080;
-            bit14 = 1;
-            bit15 = 0;
-        }
-        break;
-
-        case HashCracker::HashFunc::SHA1:
-            throw std::runtime_error("Error: Hash function not implemented yet!");
-            break;
-
-        default:
-            break;
-        }
+        msg_dgst[0] = hash_func->parse(hash_msg);
 
         for (auto& charset : charsets)
         {
@@ -103,15 +84,15 @@ namespace HonoursProject
         program_sources.push_back(std::make_pair(HonoursProject::inc_hash_func.getData().c_str(), HonoursProject::inc_hash_func.getData().size()));
         program_sources.push_back(std::make_pair(HonoursProject::inc_hash_comp.getData().c_str(), HonoursProject::inc_hash_comp.getData().size()));       
 
-        switch (hash_func)
+        switch (hash_func->type())
         {
-        case HashCracker::HashFunc::MD5:
+        case HashFunc::Type::MD5:
             {
                 program_sources.push_back(std::make_pair(HonoursProject::bruteforce_md5.getData().c_str(), HonoursProject::bruteforce_md5.getData().size()));
             }
             break;
 
-        case HashCracker::HashFunc::SHA1:
+        case HashFunc::Type::SHA1:
             {
                 throw std::runtime_error("Error: Hash function not implemented yet!");
             }
@@ -164,9 +145,9 @@ namespace HonoursProject
         kernel_gen_word_suffix->setParam("css_count", css.size());
         kernel_gen_word_suffix->setParam("msg_prefix_size", msg_prefix_size);
         kernel_gen_word_suffix->setParam("msg_suffix_size", msg_suffix_size);
-        kernel_gen_word_suffix->setParam("mask", mask);
-        kernel_gen_word_suffix->setParam("bit14", bit14);
-        kernel_gen_word_suffix->setParam("bit15", bit15);
+        kernel_gen_word_suffix->setParam("mask", hash_func->mask());
+        kernel_gen_word_suffix->setParam("bit14", hash_func->bit14());
+        kernel_gen_word_suffix->setParam("bit15", hash_func->bit15());
 
         std::shared_ptr<Kernel> kernel_gen_word_prefix = prog_gen_word->findKernel("generate_word_prefix");
 

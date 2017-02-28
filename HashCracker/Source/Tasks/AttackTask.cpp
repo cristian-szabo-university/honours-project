@@ -98,6 +98,13 @@ namespace HonoursProject
 
             kernel_hash_crack->getParam("msg_index", hash_cracked);
 
+            if (hash_cracker->benchmarkEnable())
+            {
+                hash_cracker->setStatus(HashCracker::Status::Aborted);
+
+                break;
+            }
+
             if (hash_cracked.front().found)
             {
                 hash_cracker->setStatus(HashCracker::Status::Cracked);

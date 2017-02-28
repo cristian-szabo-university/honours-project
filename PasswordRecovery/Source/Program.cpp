@@ -9,15 +9,14 @@
 const char Program::USAGE[] =
 R"(
 Usage:
-    my_program (-m HMSG -a MODE -c NAME -k MASK) [--benchmark]
+    HashCracker attack <hash> (bruteforce|dictionary) (md5|sha1) <input>
+    HashCracker benchmark (bruteforce|dictionary) (md5|sha1)
+    HashCracker -h | --help
+    HashCracker --version
 
 Options:
-    -m HMSG --hash-message=HMSG  specify hashed messaged to crack
-    -a MODE --attack=MODE        specify attack mode
-    -c NAME --hash-func=NAME     specify the crypthographic hash function
-    -k MASK --mask=MASK          specify bruteforce attack mask
-    -d FILE --dict-file=FILE     specify dictionary file path
-    --benchmark                  specify benchmark mode
+    -h --help     Show this screen.
+    --version     Show version.
 )";
 
 char comma_num_punct::do_thousands_sep() const
@@ -40,47 +39,77 @@ Program::Program(std::vector<std::string> cli)
 int Program::run()
 {
     std::future<char> console_future;
-    std::future<std::string> cracked_future;
+    std::future<std::string> cracked_future; 
     std::shared_ptr<ConsoleInput> console_task = std::make_shared<ConsoleInput>();
 
-    std::string hash_msg = args["--hash-message"].asString();
+    bool benchmark = args["benchmark"].asBool();
 
-    std::string hashFunc = args["--hash-func"].asString();
+    std::string hash_msg, attack_input;
+    HonoursProject::HashCracker::AttackMode attack_mode;
 
-    HonoursProject::HashCracker::HashFunc hash_func = HonoursProject::HashCracker::HashFunc::Invalid;
-
-    if (hashFunc.compare("md5") == 0)
+    if (args["attack"].asBool())
     {
-        hash_func = HonoursProject::HashCracker::HashFunc::MD5;
+        if (args["bruteforce"].asBool())
+        {
+            attack_mode = HonoursProject::HashCracker::AttackMode::Bruteforce;
+
+            hash_msg = args["<hash>"].asString();
+
+            attack_input = args["<input>"].asString();
+        }
+        else if (args["dictionary"].asBool())
+        {
+            throw std::runtime_error("Attack not implemented yet!");
+        }
     }
-    else if (hashFunc.compare("sha1") == 0)
+    else if (benchmark)
     {
-        hash_func = HonoursProject::HashCracker::HashFunc::SHA1;
+        if (args["bruteforce"].asBool())
+        {
+            attack_mode = HonoursProject::HashCracker::AttackMode::Bruteforce;
+
+            attack_input = "?a?a?a?a?a?a?a?a";
+        }
+        else if (args["dictionary"].asBool())
+        {
+            throw std::runtime_error("Attack not implemented yet!");
+        }
+
+        hash_msg = std::string(32, 'f');
     }
 
-    bool benchmark = args["--benchmark"].asBool();
+    std::shared_ptr<HonoursProject::HashFunc> hash_func;
 
+    if (args["md5"].asBool())
+    {
+        hash_func = std::make_shared<HonoursProject::MD5_HashFunc>();
+    }
+    else if (args["sha1"].asBool())
+    {
+        throw std::runtime_error("Hash function not implemented yet!");
+    }
+    
     hash_cracker = std::make_shared<HonoursProject::HashCracker>(hash_msg, hash_func, benchmark);
-
-    std::string attackMode = args["--attack"].asString();
-
-    std::string attack_input;
-    HonoursProject::HashCracker::AttackMode attack_mode = HonoursProject::HashCracker::AttackMode::Invalid;
-
-    if (attackMode.compare("bruteforce") == 0)
-    {
-        attack_input = args["--mask"].asString();
-
-        attack_mode = HonoursProject::HashCracker::AttackMode::Bruteforce;
-    }
-    else if (attackMode.compare("dictionary") == 0)
-    {
-        attack_input = args["--dict-file"].asString();
-
-        attack_mode = HonoursProject::HashCracker::AttackMode::Dictionary;
-    }
-
+    
     cracked_future = hash_cracker->executeAttack(attack_mode, attack_input);
+
+    if (benchmark)
+    {
+        cracked_future.get();
+
+        std::cout << std::endl << "---=== Benchmark Statistics ===---" << std::endl << std::endl;
+
+        std::cout << std::setfill('.') << std::setw(25) << std::left << "Hash.Type";
+        std::cout << ": " << hash_cracker->getHashFunc() << std::endl;
+
+        for (std::size_t device_pos = 0; device_pos < hash_cracker->getDeviceNum(); device_pos++)
+        {
+            std::cout << std::setfill('.') << std::setw(25) << std::left << ("Speed.Device.#" + std::to_string(device_pos));
+            std::cout << ": " << format_display_speed(hash_cracker->getDeviceSpeed(device_pos), hash_cracker->getDeviceExec(device_pos)) << std::endl;
+        }
+
+        return 0;
+    }
 
     char user_cmd = 0;
     std::future_status console_status = std::future_status::ready;

@@ -64,7 +64,7 @@ namespace HonoursProject
                 attack_futures.push_back(std::async(std::launch::async, &AttackTask::run, task.get()));
             }
 
-            while (attack_futures.size() > 0 && hash_cracker->getStatus() != HashCracker::Status::Cracked)
+            while (attack_futures.size() > 0)
             {
                 auto future_iter = std::remove_if(attack_futures.begin(), attack_futures.end(),
                     [](std::future<std::string>& future)

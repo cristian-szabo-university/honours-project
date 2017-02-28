@@ -5,6 +5,7 @@
 #include "Core/Platform.hpp"
 #include "Core/Charset.hpp"
 #include "Core/Logger.hpp"
+#include "Core/HashFunc.hpp"
 #include "Core/HashCracker.hpp"
 
 #include "OpenCL/Device.hpp"

@@ -198,7 +198,7 @@ void crack_md5(
         MD5_STEP_FAST(MD5_I, b, c, d, a, I_wdc3b, MD5_ROUND_4_SHIFT_4);      /* 60 */
         MD5_STEP_FAST(MD5_I, a, b, c, d, I_w4c3c, MD5_ROUND_4_SHIFT_1);      /* 61 */
 
-        //if (NOT_EQUAL_SCALAR(a,search[0])) continue;
+        if (NOT_EQUAL_SCALAR(a,search[0])) continue;
 
         MD5_STEP_FAST(MD5_I, d, a, b, c, I_wbc3d, MD5_ROUND_4_SHIFT_2);      /* 62 */
         MD5_STEP_FAST(MD5_I, c, d, a, b, I_w2c3e, MD5_ROUND_4_SHIFT_3);      /* 63 */

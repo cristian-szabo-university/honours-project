@@ -61,9 +61,8 @@ namespace HonoursProject
             return std::string();
         }
 
-        std::uint64_t hash_rank;
+        std::uint64_t hash_rank = batch_offset;
 
-        hash_rank = batch_offset;
         hash_rank += msg_idx.msg_batch_pos;
         hash_rank *= inner_loop_size;
         hash_rank += inner_loop_pos + msg_idx.inner_loop_pos;

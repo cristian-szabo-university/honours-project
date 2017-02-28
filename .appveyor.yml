@@ -1,12 +1,16 @@
 version: 1.0.{build}
+max_jobs: 2
 configuration: Release
-platform: x86
+platform:
+- x86
+- x64
+clone_depth: 1
 before_build:
 - cmd: cmake.exe -G "Visual Studio 14 2015" -B.\Build -H.\ -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%\Install
 build:
   project: Build\INSTALL.vcxproj
   parallel: true
-  verbosity: minimal
+  verbosity: normal
 before_package:
 - cmd: msbuild Build\Package.vcxproj
 artifacts:
@@ -17,4 +21,3 @@ deploy:
     secure: gomSq79o3pnZMbng5Z7SYa+C5rFDRCYkA3BC/0MTe/Tnup4QMNKFwTzmtN7pxY36
   on:
     appveyor_repo_tag: true
- 

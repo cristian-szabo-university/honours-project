@@ -1,1 +1,20 @@
-
+version: 1.0.{build}
+configuration: Release
+platform: x86
+before_build:
+- cmd: cmake.exe -G "Visual Studio 14 2015" -B.\Build -H.\ -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%\Install
+build:
+  project: Build\INSTALL.vcxproj
+  parallel: true
+  verbosity: minimal
+before_package:
+- cmd: msbuild Build\Package.vcxproj
+artifacts:
+- path: Package\*.exe
+deploy:
+- provider: GitHub
+  auth_token:
+    secure: gomSq79o3pnZMbng5Z7SYa+C5rFDRCYkA3BC/0MTe/Tnup4QMNKFwTzmtN7pxY36
+  on:
+    appveyor_repo_tag: true
+ 

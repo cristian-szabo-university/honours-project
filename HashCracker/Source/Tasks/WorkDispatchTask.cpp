@@ -66,7 +66,7 @@ namespace HonoursProject
 
             while (attack_futures.size() > 0)
             {
-                auto future_iter = std::remove_if(attack_futures.begin(), attack_futures.end(),
+                auto future_iter = std::find_if(attack_futures.begin(), attack_futures.end(),
                     [](std::future<std::string>& future)
                 {
                     std::future_status status = future.wait_for(std::chrono::nanoseconds(1));
@@ -74,26 +74,23 @@ namespace HonoursProject
                     return (status == std::future_status::ready);
                 });
 
-                auto future_begin = future_iter;
-
-                std::for_each(future_iter, attack_futures.end(),
-                    [&](std::future<std::string>& future)
+                if (future_iter != attack_futures.end())
                 {
-                    std::string result = future.get();
+                    std::string result = future_iter->get();
 
                     if (!result.empty())
                     {
                         hash_plain = result;
                     }
 
-                    std::size_t attack_pos = std::distance(future_begin, attack_futures.end()) - 1;
+                    std::size_t attack_pos = std::distance(future_iter, attack_futures.end()) - 1;
 
                     std::shared_ptr<AttackTask> attack_task = attack_tasks.at(attack_pos);
 
                     total_message_tested += (attack_task->getBatchSize() * attack_task->getInnerLoopSize());
 
-                    std::advance(future_begin, 1);
-                });
+                    future_iter = std::rotate(future_iter, future_iter + 1, attack_futures.end());
+                }
 
                 future_iter = attack_futures.erase(future_iter, attack_futures.end());
             }

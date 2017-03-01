@@ -9,8 +9,8 @@
 const char Program::USAGE[] =
 R"(
 Usage:
-    HashCracker attack <hash> (bruteforce|dictionary) (md5|sha1) <input>
-    HashCracker benchmark (bruteforce|dictionary) (md5|sha1)
+    HashCracker attack <hash> (bruteforce|dictionary) (md5|sha1) <input> [--device=<type>]
+    HashCracker benchmark (bruteforce|dictionary) (md5|sha1) [--device=<type>]
     HashCracker -h | --help
     HashCracker --version
 
@@ -88,10 +88,34 @@ int Program::run()
     {
         throw std::runtime_error("Hash function not implemented yet!");
     }
+
+    HonoursProject::HashCracker::DeviceFilter device_filter;
+
+    if (args["--device"].isString())
+    {
+        std::string type = args["--device"].asString();
+
+        if (type == "cpu")
+        {
+            device_filter = HonoursProject::HashCracker::DeviceFilter::CPU_ONLY;
+        }
+        else if (type == "gpu")
+        {
+            device_filter = HonoursProject::HashCracker::DeviceFilter::GPU_ONLY;
+        }
+        else
+        {
+            throw std::runtime_error("Invalid device type!");
+        }
+    }
+    else
+    {
+        device_filter = HonoursProject::HashCracker::DeviceFilter::CPU_GPU;
+    }
     
     hash_cracker = std::make_shared<HonoursProject::HashCracker>(hash_msg, hash_func, benchmark);
     
-    cracked_future = hash_cracker->executeAttack(attack_mode, attack_input);
+    cracked_future = hash_cracker->executeAttack(attack_mode, attack_input, device_filter);
 
     if (benchmark)
     {
@@ -102,10 +126,24 @@ int Program::run()
         std::cout << std::setfill('.') << std::setw(25) << std::left << "Hash.Type";
         std::cout << ": " << hash_cracker->getHashFunc() << std::endl;
 
+        double total_device_speed = 0.0, total_device_exec = 0.0;
+
         for (std::size_t device_pos = 0; device_pos < hash_cracker->getDeviceNum(); device_pos++)
         {
+            double device_speed = hash_cracker->getDeviceSpeed(device_pos);
+            double device_exec = hash_cracker->getDeviceExec(device_pos);
+
             std::cout << std::setfill('.') << std::setw(25) << std::left << ("Speed.Device.#" + std::to_string(device_pos));
-            std::cout << ": " << format_display_speed(hash_cracker->getDeviceSpeed(device_pos), hash_cracker->getDeviceExec(device_pos)) << std::endl;
+            std::cout << ": " << format_display_speed(device_speed, device_exec) << std::endl;
+
+            total_device_speed += device_speed;
+            total_device_exec += device_exec;
+        }
+
+        if (hash_cracker->getDeviceNum() > 1)
+        {
+            std::cout << std::setfill('.') << std::setw(25) << std::left << "Speed.Device.Total";
+            std::cout << ": " << format_display_speed(total_device_speed, total_device_exec) << std::endl;
         }
 
         return 0;
@@ -191,10 +229,24 @@ void Program::process_input_command(char cmd)
             std::cout << std::setfill('.') << std::setw(25) << std::left << "Progress";
             std::cout << ": " << hash_cracker->getMessageProgress() << " / " << hash_cracker->getMessageTotal() << std::endl;
 
+            double total_device_speed = 0.0, total_device_exec = 0.0;
+
             for (std::size_t device_pos = 0; device_pos < hash_cracker->getDeviceNum(); device_pos++)
             {
+                double device_speed = hash_cracker->getDeviceSpeed(device_pos);
+                double device_exec = hash_cracker->getDeviceExec(device_pos);
+
                 std::cout << std::setfill('.') << std::setw(25) << std::left << ("Speed.Device.#" + std::to_string(device_pos));
-                std::cout << ": " << format_display_speed(hash_cracker->getDeviceSpeed(device_pos), hash_cracker->getDeviceExec(device_pos)) << std::endl;
+                std::cout << ": " << format_display_speed(device_speed, device_exec) << std::endl;
+
+                total_device_speed += device_speed;
+                total_device_exec += device_exec;
+            }
+
+            if (hash_cracker->getDeviceNum() > 1)
+            {
+                std::cout << std::setfill('.') << std::setw(25) << std::left << "Speed.Device.*";
+                std::cout << ": " << format_display_speed(total_device_speed, total_device_exec) << std::endl;
             }
         }
         break;

@@ -191,16 +191,18 @@ namespace HonoursProject
                 break;
             }
 
-            setup_futures.push_back(std::async(std::launch::async, &SetupTask::run, setup_task.get()));
-
             setup_tasks.push_back(setup_task);
+
+            auto future = std::async(std::launch::async, &SetupTask::run, setup_task.get());
+
+            setup_futures.push_back(std::move(future));            
         }
 
         std::vector<std::shared_ptr<AttackTask>> attack_tasks;
 
         while (setup_futures.size() > 0)
         {
-            auto future_iter = std::remove_if(setup_futures.begin(), setup_futures.end(),
+            auto future_iter = std::find_if(setup_futures.begin(), setup_futures.end(),
                 [](const std::future<std::shared_ptr<AttackTask>>& future)
             {
                 std::future_status status = future.wait_for(std::chrono::nanoseconds(1));
@@ -208,25 +210,19 @@ namespace HonoursProject
                 return (status == std::future_status::ready);
             });
 
-            std::for_each(future_iter, setup_futures.end(),
-                [&](std::future<std::shared_ptr<AttackTask>>& future)
+            if (future_iter != setup_futures.end())
             {
-                std::shared_ptr<AttackTask> attack_task;
-
                 try
                 {
-                    attack_task = future.get();
+                    attack_tasks.push_back(future_iter->get());
                 }
-                catch (std::exception ex)
+                catch (std::exception& ex)
                 {
                     Logger::error(ex.what());
                 }
 
-                if (attack_task)
-                {
-                    attack_tasks.push_back(attack_task);
-                }
-            });
+                future_iter = std::rotate(future_iter, future_iter + 1, setup_futures.end());
+            }
 
             future_iter = setup_futures.erase(future_iter, setup_futures.end());
         }
@@ -250,20 +246,27 @@ namespace HonoursProject
         {
             std::shared_ptr<AutotuneTask> autotune_task = std::make_shared<AutotuneTask>(attack_task, 12);
 
-            autotune_futures.push_back(std::async(std::launch::async, &AutotuneTask::run, autotune_task.get()));
-
             autotune_tasks.push_back(autotune_task);
+
+            auto future = std::async(std::launch::async, &AutotuneTask::run, autotune_task.get());
+
+            autotune_futures.push_back(std::move(future));
         }
 
         while (autotune_futures.size() > 0)
         {
-            auto future_iter = std::remove_if(autotune_futures.begin(), autotune_futures.end(), 
+            auto future_iter = std::find_if(autotune_futures.begin(), autotune_futures.end(),
                 [](const std::future<void>& future)
             {
                 std::future_status status = future.wait_for(std::chrono::milliseconds(10));
 
                 return (status == std::future_status::ready);
             });
+
+            if (future_iter != autotune_futures.end())
+            {
+                future_iter = std::rotate(future_iter, future_iter + 1, autotune_futures.end());
+            }
 
             future_iter = autotune_futures.erase(future_iter, autotune_futures.end());
         }

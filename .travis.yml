@@ -8,7 +8,6 @@ matrix:
   include:
     - os: linux
       sudo: false
-      compiler: gcc
       addons:
         apt:
           sources:
@@ -21,7 +20,6 @@ matrix:
          - ENV_CXX_FLAGS="-m32"
     - os: linux
       sudo: false
-      compiler: gcc
       addons:
         apt:
           sources:
@@ -42,13 +40,6 @@ cache:
 
 install:
   - |
-    echo $CXX
-    echo $CC
-    gcc --version
-    if [ "$CXX" = "g++" ]; then 
-      export CXX="g++-5" CC="gcc-5"; 
-    fi
-  - |
     if [ ! -f "${TRAVIS_BUILD_DIR}/tmp/cmake/cached" ]; then
       mkdir -p ${TRAVIS_BUILD_DIR}/tmp/cmake
       travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C ${TRAVIS_BUILD_DIR}/tmp/cmake          
@@ -56,6 +47,7 @@ install:
     fi
     export PATH=${TRAVIS_BUILD_DIR}/tmp/cmake/bin:${PATH}
   - |
+    export CXX="g++-5" CC="gcc-5"; 
     export CMAKE_OPTIONS=${CMAKE_OPTIONS}" "${ENV_CMAKE_OPTIONS}
     export CXX_FLAGS=${CXX_FLAGS}" "${ENV_CXX_FLAGS}
 

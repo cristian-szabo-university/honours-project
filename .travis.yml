@@ -8,7 +8,7 @@ matrix:
   include:
     - os: linux
       sudo: false
-      compiler: g++-5
+      compiler: gcc
       addons:
         apt:
           sources:
@@ -21,7 +21,7 @@ matrix:
          - ENV_CXX_FLAGS="-m32"
     - os: linux
       sudo: false
-      compiler: g++-5
+      compiler: gcc
       addons:
         apt:
           sources:
@@ -42,6 +42,8 @@ cache:
 
 install:
   - |
+    echo $CXX
+    echo $CC
     if [ "$CXX" = "g++" ]; then 
       export CXX="g++-5" CC="gcc-5"; 
     fi

@@ -79,16 +79,16 @@ namespace HonoursProject
         build_opts.push_back("-DVECT_SIZE=" + std::to_string(device->getVectorWidth()));
 
         cl::Program::Sources program_sources;
-        program_sources.push_back(std::make_pair(HonoursProject::inc_types.getData().c_str(), HonoursProject::inc_types.getData().size()));
-        program_sources.push_back(std::make_pair(HonoursProject::inc_hash_const.getData().c_str(), HonoursProject::inc_hash_const.getData().size()));
-        program_sources.push_back(std::make_pair(HonoursProject::inc_hash_func.getData().c_str(), HonoursProject::inc_hash_func.getData().size()));
-        program_sources.push_back(std::make_pair(HonoursProject::inc_hash_comp.getData().c_str(), HonoursProject::inc_hash_comp.getData().size()));       
+        program_sources.push_back(std::make_pair(inc_types.getData().c_str(), inc_types.getData().size()));
+        program_sources.push_back(std::make_pair(inc_hash_const.getData().c_str(), inc_hash_const.getData().size()));
+        program_sources.push_back(std::make_pair(inc_hash_func.getData().c_str(), inc_hash_func.getData().size()));
+        program_sources.push_back(std::make_pair(inc_hash_comp.getData().c_str(), inc_hash_comp.getData().size()));       
 
         switch (hash_func->type())
         {
         case HashFunc::Type::MD5:
             {
-                program_sources.push_back(std::make_pair(HonoursProject::bruteforce_md5.getData().c_str(), HonoursProject::bruteforce_md5.getData().size()));
+                program_sources.push_back(std::make_pair(bruteforce_md5.getData().c_str(), bruteforce_md5.getData().size()));
             }
             break;
 
@@ -129,8 +129,8 @@ namespace HonoursProject
         kernel_hash_crack->setParam("msg_digest", msg_dgst);
 
         cl::Program::Sources gen_word_source;
-        gen_word_source.push_back(std::make_pair(HonoursProject::inc_types.getData().c_str(), HonoursProject::inc_types.getData().size()));
-        gen_word_source.push_back(std::make_pair(HonoursProject::gen_word.getData().c_str(), HonoursProject::gen_word.getData().size()));
+        gen_word_source.push_back(std::make_pair(inc_types.getData().c_str(), inc_types.getData().size()));
+        gen_word_source.push_back(std::make_pair(gen_word.getData().c_str(), gen_word.getData().size()));
 
         std::shared_ptr<Program> prog_gen_word = std::make_shared<Program>(device);
 

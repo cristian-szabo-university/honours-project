@@ -167,6 +167,10 @@ install (EXPORT ${TARGET_NAME}
 #
 ###############################################################################
     
+if (PLATFORM_NAME)
+    set (CPACK_SYSTEM_NAME ${PLATFORM_NAME})
+endif ()
+    
 set (CPACK_PACKAGE_NAME ${CMAKE_PROJECT_NAME})
 set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "Honours Project for Computing School at UWS")
 set (CPACK_PACKAGE_VENDOR "B00233705")

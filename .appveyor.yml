@@ -6,7 +6,7 @@ platform:
 - x64
 clone_depth: 1
 before_build:
-- cmd: cmake.exe -G "Visual Studio 14 2015" -B.\Build -H.\ -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%\Install
+- cmd: cmake.exe -G "Visual Studio 14 2015" -B.\Build -H.\ -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%\Install -DPLATFORM_NAME="Win%PLATFORM%"
 build:
   project: Build\INSTALL.vcxproj
   parallel: true

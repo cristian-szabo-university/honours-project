@@ -5,8 +5,16 @@ platform:
 - x86
 - x64
 clone_depth: 1
+init:
+- ps: >-
+    if ($env:APPVEYOR_REPO_TAG -eq "true")
+    {
+      $patch = $env:APPVEYOR_BUILD_VERSION
+      $version = $($env:APPVEYOR_REPO_TAG_NAME.TrimStart("v"))
+      Update-AppveyorBuild -Version "$version.$patch"
+    }
 before_build:
-- cmd: cmake.exe -G "Visual Studio 14 2015" -B.\Build -H.\ -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%\Install -DPLATFORM_NAME="Win-%PLATFORM%"
+- cmd: cmake.exe -G "Visual Studio 14 2015" -B.\Build -H.\ -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%\Install -DCPACK_SYSTEM_NAME="Win-%PLATFORM% -DCPACK_GENERATOR=NSIS -DCPACK_PACKAGE_VERSION=%APPVEYOR_BUILD_VERSION%"
 build:
   project: Build\INSTALL.vcxproj
   parallel: true

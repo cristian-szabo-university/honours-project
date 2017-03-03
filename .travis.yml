@@ -10,7 +10,6 @@ matrix:
     - os: linux
       sudo: false
       language: cpp
-      compiler: g++
       addons:
         apt:
           sources:
@@ -24,7 +23,6 @@ matrix:
     - os: linux
       sudo: false
       language: cpp
-      compiler: g++
       addons:
         apt:
           sources:

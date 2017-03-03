@@ -9,7 +9,8 @@ matrix:
   include:
     - os: linux
       sudo: false
-      compiler: gcc
+      language: c++
+      compiler: g++
       addons:
         apt:
           sources:
@@ -22,7 +23,8 @@ matrix:
          - ENV_CXX_FLAGS="-m32"
     - os: linux
       sudo: false
-      compiler: gcc
+      language: c++
+      compiler: g++
       addons:
         apt:
           sources:

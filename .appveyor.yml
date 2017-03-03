@@ -1,4 +1,4 @@
-version: 1.0.{build}
+version: '{build}'
 max_jobs: 2
 configuration: Release
 platform:
@@ -8,6 +8,7 @@ clone_depth: 1
 init:
 - ps: >-
     if ($env:APPVEYOR_REPO_TAG -eq "true")
+
     {
       $patch = $env:APPVEYOR_BUILD_VERSION
       $version = $($env:APPVEYOR_REPO_TAG_NAME.TrimStart("v"))

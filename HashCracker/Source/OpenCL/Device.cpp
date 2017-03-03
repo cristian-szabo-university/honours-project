@@ -228,6 +228,11 @@ namespace HonoursProject
 
         this->vector_width = vector_width;
 
+        if (this->vendor == Vendor::Intel && this->type == Type::GPU)
+        {
+            return false;
+        }
+
         ready = !ready;
 
         return true;

@@ -15,7 +15,7 @@ init:
       Update-AppveyorBuild -Version "$version.$patch"
     }
 before_build:
-- cmd: cmake.exe -G "Visual Studio 14 2015" -B.\Build -H.\ -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%\Install -DCPACK_SYSTEM_NAME="Win-%PLATFORM% -DCPACK_GENERATOR=NSIS -DCPACK_PACKAGE_VERSION=%APPVEYOR_BUILD_VERSION%"
+- cmd: cmake.exe -G "Visual Studio 14 2015" -B.\Build -H.\ -DCMAKE_INSTALL_PREFIX=%APPVEYOR_BUILD_FOLDER%\Install -DCPACK_SYSTEM_NAME="Win-%PLATFORM%" -DCPACK_GENERATOR="NSIS" -DCPACK_PACKAGE_VERSION="%APPVEYOR_BUILD_VERSION%"
 build:
   project: Build\INSTALL.vcxproj
   parallel: true

@@ -168,7 +168,7 @@ inline void mark_hash(__global struct message_index_t* msg_index, const u32 msg_
     if (((h0).s6 == search[0]) && ((h1).s6 == search[1]) && ((h2).s6 == search[2]) && ((h3).s6 == search[3]))   \
         mark_hash(msg_index, msg_batch_pos, inner_loop_pos + 6);                                                \
     if (((h0).s7 == search[0]) && ((h1).s7 == search[1]) && ((h2).s7 == search[2]) && ((h3).s7 == search[3]))   \
-        mark_hash(msg_index, msg_batch_pos, inner_loop_pos + 7;                                                 \
+        mark_hash(msg_index, msg_batch_pos, inner_loop_pos + 7);                                                \
     if (((h0).s8 == search[0]) && ((h1).s8 == search[1]) && ((h2).s8 == search[2]) && ((h3).s8 == search[3]))   \
         mark_hash(msg_index, msg_batch_pos, inner_loop_pos + 8);                                                \
     if (((h0).s9 == search[0]) && ((h1).s9 == search[1]) && ((h2).s9 == search[2]) && ((h3).s9 == search[3]))   \

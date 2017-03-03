@@ -63,8 +63,11 @@ after_script:
 
 deploy:
   provider: releases
-  api_key: $GITHUB_AUTH
-  file: $TRAVIS_BUILD_DIR/build/app/CodeTestApp
+  api_key:
+    secure: ${GITHUB_AUTH}
+  file_glob: true
+  file:
+    - Package/*.tar.gz
   skip_cleanup: true
   on:
     tags: true

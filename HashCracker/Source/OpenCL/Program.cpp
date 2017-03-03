@@ -57,15 +57,6 @@ namespace HonoursProject
         ss << "-cl-kernel-arg-info" << " ";
         ss << "-cl-std=CL" << Platform::OPENCL_COMPILER_MAJOR_VERSION << "." << Platform::OPENCL_COMPILER_MINOR_VERSION << " ";
 
-        if (device->getVendor() == Device::Vendor::Intel)
-        {
-            ss << "-g -s \"D:\\GitHub\\honours-project\\HashCracker\\OpenCL\"";
-        }
-        else if (device->getVendor() == Device::Vendor::NVIDIA)
-        {
-            ss << "-cl-nv-verbose";
-        }
-
         for (auto opt : build_opts)
         {
             ss << " " << opt;
@@ -154,29 +145,6 @@ namespace HonoursProject
             }
 
             kernels.push_back(kernel);
-
-            for (std::size_t param_idx = 0; param_idx < kernel->getParamNum(); param_idx++)
-            {
-                std::shared_ptr<KernelParam> param = kernel->getParamAt(param_idx);
-                std::shared_ptr<KernelBuffer> buffer = kernel->findBuffer(param);
-
-                if (param->getAddressQualifier() != KernelParam::AddressQualifier::Private)
-                {
-                    std::shared_ptr<DeviceMemory> mem = device->createMemory(param, buffer->getElemNum() * buffer->getElemSize());
-
-                    if (!mem)
-                    {
-                        throw std::runtime_error("Error: Not enough memory left on device!");
-                    }
-
-                    buffers.insert(std::make_pair(buffer, mem));            
-                }
-
-                if (!updateBuffer(buffer, buffer->getElemNum() * buffer->getElemSize()))
-                {
-                    Logger::error("Failed to update param to kernel!\n");
-                }
-            }
         }
 
         ready = !ready;
@@ -230,6 +198,11 @@ namespace HonoursProject
                 std::shared_ptr<KernelParam> src_param = old_kernel->getParamAt(index);
                 std::shared_ptr<KernelParam> dst_param = new_kernel->getParamAt(index);
                 std::shared_ptr<KernelBuffer> buffer = old_kernel->findBuffer(src_param);
+
+                if (!new_kernel->createBuffer(src_param, buffer->getElemNum()))
+                {
+                    continue;
+                }
 
                 if (src_param->autoSyncEnable())
                 {
@@ -298,82 +271,67 @@ namespace HonoursProject
         return (*kernel_iter);
     }
 
-    bool Program::updateBuffer(std::shared_ptr<KernelBuffer> buffer, std::size_t size, std::size_t offset)
+    std::shared_ptr<DeviceMemory> Program::createMemory(std::shared_ptr<KernelBuffer> buffer)
     {
         cl_int cl_error = CL_SUCCESS;
 
-        if (!buffer || !size)
+        auto iter_buf = buffers.find(buffer);
+
+        if (iter_buf != buffers.end())
         {
-            return false;
+            return iter_buf->second;
         }
 
-        if (!buffer->writePending())
+        std::size_t new_size = buffer->getElemNum() * buffer->getElemSize();
+
+        std::shared_ptr<DeviceMemory> new_mem = device->createMemory(buffer->getParam(), new_size);
+
+        if (!new_mem->isReady())
         {
-            return true;
+            throw std::runtime_error("Error: Not enough memory left on device!");
         }
 
         std::shared_ptr<KernelParam> param = buffer->getParam();
         std::shared_ptr<Kernel> kernel = param->getKernel();
 
-        if (param->getAddressQualifier() == KernelParam::AddressQualifier::Private)
+        cl_error = kernel->getHandle().setArg(param->getIndex(), new_mem->getHandle());
+
+        if (cl_error != CL_SUCCESS)
         {
-            if (size != buffer ->getElemSize() || offset)
-            {
-                return false;
-            }
+            throw std::runtime_error("ERROR: kernel::setArg()");
+        }
 
-            cl_error = kernel->getHandle().setArg(param->getIndex(), size, buffer->getData(offset));
+        buffers.insert(std::make_pair(buffer, new_mem));
 
-            if (cl_error != CL_SUCCESS)
-            {
-                throw std::runtime_error("ERROR: kernel::setArg()\n");
-            }
+        return new_mem;
+    }
 
-            buffer->setWriteFlag(false);
+    bool Program::destroyMemory(std::shared_ptr<KernelBuffer> buffer)
+    {
+        auto iter_buf = buffers.find(buffer);
 
+        if (iter_buf == buffers.end())
+        {
             return true;
         }
 
-        auto iter_buf = buffers.find(buffer);
-        std::shared_ptr<DeviceMemory> mem = iter_buf->second;
-      
-        std::size_t new_size = size + offset;
+        device->destroyMemory(iter_buf->second);
 
-        if (new_size > mem->getSize())
-        {
-            std::shared_ptr<DeviceMemory> new_mem = device->createMemory(param, new_size);
-
-            cl_error = command_queue.enqueueWriteBuffer(new_mem->getHandle(), CL_BLOCKING, 0, mem->getSize(), iter_buf->first->getData(0));
-
-            if (cl_error != CL_SUCCESS)
-            {
-                throw std::runtime_error("ERROR: command_queue::enqueueWriteBuffer()\n");
-            }
-
-            device->destroyMemory(mem);
-
-            iter_buf->second = new_mem;
-
-            mem = new_mem;
-        }
-
-        cl_error = command_queue.enqueueWriteBuffer(mem->getHandle(), CL_BLOCKING, offset, size, buffer->getData(offset));
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: command_queue::enqueueWriteBuffer()\n");
-        }
-
-        cl_error = kernel->getHandle().setArg(param->getIndex(), mem->getHandle());
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: kernel::setArg()\n");
-        }
-
-        buffer->setWriteFlag(false);
+        buffers.erase(iter_buf);
 
         return true;
+    }
+
+    std::shared_ptr<DeviceMemory> Program::findMemory(std::shared_ptr<KernelBuffer> buffer)
+    {
+        auto iter_buf = buffers.find(buffer);
+
+        if (iter_buf == buffers.end())
+        {
+            return std::shared_ptr<DeviceMemory>();
+        }
+
+        return iter_buf->second;
     }
 
     bool Program::syncBuffer(std::shared_ptr<KernelBuffer> buffer, std::size_t size, std::size_t offset)
@@ -470,6 +428,27 @@ namespace HonoursProject
         }
 
         return exec_time;
+    }
+
+    bool Program::updateBuffer(std::shared_ptr<KernelBuffer> buffer, std::size_t size, std::size_t offset)
+    {
+        cl_int cl_error = CL_SUCCESS;
+
+        std::shared_ptr<DeviceMemory> mem = findMemory(buffer);
+
+        if (offset + size > mem->getSize())
+        {
+            return false;
+        }
+
+        cl_error = command_queue.enqueueWriteBuffer(mem->getHandle(), CL_BLOCKING, offset, size, buffer->getData(offset));
+
+        if (cl_error != CL_SUCCESS)
+        {
+            throw std::runtime_error("ERROR: command_queue::enqueueWriteBuffer()\n");
+        }
+
+        return true;
     }
 
     bool CompareKernelBuffer::operator()(const std::shared_ptr<KernelBuffer>& a, const std::shared_ptr<KernelBuffer>& b) const

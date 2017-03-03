@@ -348,8 +348,13 @@ namespace HonoursProject
         return result;
     }
 
-    void Device::destroyMemory(std::shared_ptr<DeviceMemory> mem)
+    bool Device::destroyMemory(std::shared_ptr<DeviceMemory> mem)
     {
+        if (!mem)
+        {
+            return true;
+        }
+
         switch (mem->getAddressFlag())
         {
         case DeviceMemory::AddressFlag::Global:
@@ -360,6 +365,8 @@ namespace HonoursProject
             used_local_mem_size -= mem->getSize();
             break;
         }
+
+        return true;
     }
 
     std::uint64_t Device::getTotalGlobalMemSize()

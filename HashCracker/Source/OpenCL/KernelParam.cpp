@@ -170,29 +170,24 @@ namespace HonoursProject
         cl_int cl_error = CL_SUCCESS;
 
         std::shared_ptr<KernelBuffer> src_buf = src_param->getKernel()->findBuffer(src_param);
+        std::shared_ptr<KernelBuffer> dst_buf = dst_param->getKernel()->findBuffer(dst_param);
 
-        if (src_buf->readPending())
+        if (!src_buf->readPending() && 
+            !KernelBuffer::Copy(src_buf, dst_buf, size, src_offset, dst_offset))
+        {        
+            return false;
+        }
+
+        std::shared_ptr<DeviceMemory> src_mem = src_param->getKernel()->getProgram()->findMemory(src_buf);
+        std::shared_ptr<DeviceMemory> dst_mem = dst_param->getKernel()->getProgram()->findMemory(dst_buf);
+
+        if (src_mem && dst_mem)
         {
-            std::shared_ptr<Program> src_prog = src_param->getKernel()->getProgram();
-
-            if (!src_prog->syncBuffer(src_buf, size * src_buf->getElemSize(), src_offset * src_buf->getElemSize()))
+            if (!src_buf->writePending() && 
+                !DeviceMemory::Copy(src_mem, dst_mem, size * src_buf->getElemSize(), dst_offset * src_buf->getElemSize()))
             {
                 return false;
             }
-        }
-
-        std::shared_ptr<KernelBuffer> dst_buf = dst_param->getKernel()->findBuffer(dst_param);
-
-        if (!KernelBuffer::Copy(src_buf, dst_buf, size, src_offset, dst_offset))
-        {
-            return false;
-        }
-
-        std::shared_ptr<Program> dst_prog = dst_param->getKernel()->getProgram();
-
-        if (!dst_prog->updateBuffer(dst_buf, size * src_buf->getElemSize(), dst_offset * src_buf->getElemSize()))
-        {
-            return false;
         }
 
         return true;

@@ -31,6 +31,8 @@ namespace HonoursProject
 
         bool create(std::size_t size, AddressFlag flag);
 
+        bool isReady();
+
         bool destroy();
 
         cl::Buffer getHandle();

@@ -77,6 +77,11 @@ namespace HonoursProject
         return true;
     }
 
+    bool DeviceMemory::isReady()
+    {
+        return ready;
+    }
+
     bool DeviceMemory::destroy()
     {
         if (!ready)
@@ -123,19 +128,20 @@ namespace HonoursProject
     bool DeviceMemory::Copy(std::shared_ptr<DeviceMemory> src_mem, std::shared_ptr<DeviceMemory> dst_mem, std::size_t size, std::size_t src_offset, std::size_t dst_offset)
     {
         cl_int cl_error = CL_SUCCESS;
-
-        std::shared_ptr<Program> src_prog = src_mem->getParam()->getKernel()->getProgram();
-
-        cl_error = src_prog->getCommandQueue().enqueueCopyBuffer(
-            src_mem->getHandle(),
-            dst_mem->getHandle(),
-            src_offset, dst_offset, size);
-
-        // if src_offset, dst_offset, cb, src_offset + cb, or dst_offset + cb require accessing elements outside the buffer memory objects.
-        if (cl_error == CL_INVALID_VALUE)
+      
+        if (!size ||
+            size + dst_offset > dst_mem->getSize() ||
+            size + src_offset > src_mem->getSize())
         {
             return false;
         }
+
+        std::shared_ptr<Program> dst_prog = dst_mem->getParam()->getKernel()->getProgram();
+
+        cl_error = dst_prog->getCommandQueue().enqueueCopyBuffer(
+            src_mem->getHandle(),
+            dst_mem->getHandle(),
+            src_offset, dst_offset, size);
 
         if (cl_error != CL_SUCCESS)
         {

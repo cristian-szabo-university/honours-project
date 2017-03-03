@@ -6,7 +6,7 @@ namespace HonoursProject
 {
     class KernelParam;
 
-    class HASHCRACK_PUBLIC KernelBuffer
+    class HASHCRACK_PUBLIC KernelBuffer : public std::enable_shared_from_this<KernelBuffer>
     {
     public:
 
@@ -28,15 +28,15 @@ namespace HonoursProject
 
         virtual std::string getType() = 0;
 
-        virtual std::shared_ptr<KernelBuffer> clone(std::shared_ptr<KernelParam> param) = 0;
+        virtual std::shared_ptr<KernelBuffer> clone(std::shared_ptr<KernelParam> param, std::size_t size) = 0;
 
         virtual bool setData(void* data, std::size_t size, std::size_t offset);
+
+        virtual void* getData(std::size_t offset) = 0;
 
         virtual std::size_t getElemSize() = 0;
 
         virtual std::size_t getElemNum() = 0;
-
-        virtual void* getData(std::size_t offset) = 0;
 
         template<class T>
         static void RegisterDataType()
@@ -102,7 +102,7 @@ namespace HonoursProject
 
         static std::shared_ptr<KernelBuffer> Create(std::shared_ptr<KernelParam> param);
 
-        static bool Copy(std::shared_ptr<KernelBuffer> src_buff, std::shared_ptr<KernelBuffer> dst_buff, std::size_t size, std::size_t src_offset, std::size_t dst_offset);
+        static bool Copy(std::shared_ptr<KernelBuffer> src_buff, std::shared_ptr<KernelBuffer> dst_buff, std::size_t size, std::size_t src_offset = 0, std::size_t dst_offset = 0);
 
     protected:
 
@@ -121,14 +121,14 @@ namespace HonoursProject
         template<class T>
         static std::pair<std::string, std::shared_ptr<KernelBuffer>> MakeDataType(const T& value)
         {
-            std::shared_ptr<TKernelBufferValue<T>> buffer = std::make_shared<TKernelBufferValue<T>>(std::shared_ptr<KernelParam>(), value);
+            std::shared_ptr<TKernelBufferValue<T>> buffer = std::make_shared<TKernelBufferValue<T>>(std::shared_ptr<KernelParam>());
             return std::make_pair(buffer->getType(), std::dynamic_pointer_cast<KernelBuffer>(buffer));
         }
 
         template<class T>
         static std::pair<std::string, std::shared_ptr<KernelBuffer>> MakeDataType(const std::vector<T>& values)
         {
-            std::shared_ptr<TKernelBufferArray<T>> buffer = std::make_shared<TKernelBufferArray<T>>(std::shared_ptr<KernelParam>(), values);
+            std::shared_ptr<TKernelBufferArray<T>> buffer = std::make_shared<TKernelBufferArray<T>>(std::shared_ptr<KernelParam>(), 1);
             return std::make_pair(buffer->getType(), std::dynamic_pointer_cast<KernelBuffer>(buffer));
         }
 
@@ -139,10 +139,10 @@ namespace HonoursProject
     {
     public:
 
-        TKernelBufferValue(std::shared_ptr<KernelParam> param, const T& value = T())
+        TKernelBufferValue(std::shared_ptr<KernelParam> param)
             : KernelBuffer(param)
         {
-            setData((void*)(&value), 1, 0);
+            memset(&value, 1, getElemSize());
 
             type = CleanTypeName<T>();
         }
@@ -151,9 +151,9 @@ namespace HonoursProject
         {
         }
 
-        void set(const T& value)
+        bool set(const T& value)
         {
-            setData((void*)&value, 1, 0);
+            return setData((void*)&value, 1, 0);
         }
 
         T get()
@@ -166,8 +166,13 @@ namespace HonoursProject
             return type;
         }
 
-        virtual std::shared_ptr<KernelBuffer> clone(std::shared_ptr<KernelParam> param) override
+        virtual std::shared_ptr<KernelBuffer> clone(std::shared_ptr<KernelParam> param, std::size_t size) override
         {
+            if (size != 1)
+            {
+                return std::shared_ptr<KernelBuffer>();
+            }
+
             return std::dynamic_pointer_cast<KernelBuffer>(std::make_shared<TKernelBufferValue<T>>(param));
         }
 
@@ -223,10 +228,10 @@ namespace HonoursProject
     {
     public:
 
-        TKernelBufferArray(std::shared_ptr<KernelParam> param, std::vector<T> values = { T() })
+        TKernelBufferArray(std::shared_ptr<KernelParam> param, std::size_t size)
             : KernelBuffer(param)
         {
-            setData(values.data(), values.size(), 0);
+            this->values.resize(size);
 
             type = CleanTypeName<T*>();
         }
@@ -235,9 +240,9 @@ namespace HonoursProject
         {
         }
 
-        void set(const std::vector<T>& values, std::size_t offset)
+        bool set(const std::vector<T>& values, std::size_t offset)
         {
-            setData((void*)values.data(), values.size(), offset);
+            return setData((void*)values.data(), values.size(), offset);
         }
 
         std::vector<T> get(std::size_t offset)
@@ -253,23 +258,16 @@ namespace HonoursProject
             return type;
         }
 
-        virtual std::shared_ptr<KernelBuffer> clone(std::shared_ptr<KernelParam> param) override
+        virtual std::shared_ptr<KernelBuffer> clone(std::shared_ptr<KernelParam> param, std::size_t size) override
         {
-            return std::dynamic_pointer_cast<KernelBuffer>(std::make_shared<TKernelBufferArray<T>>(param));
+            return std::dynamic_pointer_cast<KernelBuffer>(std::make_shared<TKernelBufferArray<T>>(param, size));
         }
 
         virtual bool setData(void * data, std::size_t size, std::size_t offset) override
         {
-            if (!data)
+            if (!data || !size || size + offset > getElemNum())
             {
                 return false;
-            }
-
-            std::size_t new_size = size + offset;
-
-            if (getElemNum() < new_size)
-            {
-                values.resize(new_size);
             }
 
             T* cast_ptr = static_cast<T*>(data);

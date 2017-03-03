@@ -79,14 +79,9 @@ namespace HonoursProject
                 continue;
             }
 
-            std::shared_ptr<KernelBuffer> buffer = KernelBuffer::Create(param);
+            params.insert(std::make_pair(param, std::shared_ptr<KernelBuffer>()));
 
-            if (!buffer)
-            {
-                continue;
-            }
-
-            params.insert(std::make_pair(param, buffer));
+            createBuffer(param, 1);
         }
 
         ready = !ready;
@@ -171,7 +166,7 @@ namespace HonoursProject
                 continue;
             }
 
-            if (!program->updateBuffer(buffer, buffer->getElemNum() * buffer->getElemSize()))
+            if (!updateParam(param, buffer->getElemNum()))
             {
                 Logger::error("Failed to update param to kernel!\n");
 
@@ -193,7 +188,7 @@ namespace HonoursProject
                 continue;
             }
 
-            if (!program->syncBuffer(buffer, buffer->getElemNum() * buffer->getElemSize()))
+            if (!syncParam(param, buffer->getElemNum()))
             {
                 Logger::error("Failed to update kernel param!\n");
 
@@ -202,6 +197,39 @@ namespace HonoursProject
         }
 
         return exec_time;
+    }
+
+    bool Kernel::updateParam(std::shared_ptr<KernelParam> param, std::size_t size, std::size_t offset)
+    {
+        cl_int cl_error = CL_SUCCESS;
+
+        std::shared_ptr<KernelBuffer> buffer = findBuffer(param);
+
+        if (!buffer->writePending())
+        {
+            return true;
+        }
+
+        if (param->getAddressQualifier() == KernelParam::AddressQualifier::Private)
+        {
+            cl_error = handle.setArg(param->getIndex(), size * buffer->getElemSize(), buffer->getData(offset));
+
+            if (cl_error != CL_SUCCESS)
+            {
+                throw std::runtime_error("ERROR: command_queue::enqueueCopyBuffer()\n");
+            }
+        }
+        else
+        {
+            if (!program->updateBuffer(buffer, size * buffer->getElemSize(), offset * buffer->getElemSize()))
+            {
+                return false;
+            }
+        }
+
+        buffer->setWriteFlag(false);
+
+        return true;
     }
 
     std::shared_ptr<KernelParam> Kernel::findParam(const std::string& name)
@@ -220,6 +248,51 @@ namespace HonoursProject
         return param_iter->first;
     }
 
+    std::shared_ptr<KernelBuffer> Kernel::createBuffer(std::shared_ptr<KernelParam> param, std::size_t size)
+    {
+        auto iter_param = params.find(param);
+
+        if (iter_param == params.end())
+        {
+            return std::shared_ptr<KernelBuffer>();
+        }
+
+        std::shared_ptr<KernelBuffer> new_buff;
+
+        if (iter_param->second)
+        {
+            if (size <= iter_param->second->getElemNum())
+            {
+                return iter_param->second;
+            }
+
+            new_buff = iter_param->second->clone(param, size);
+        }
+        else
+        {
+            new_buff = KernelBuffer::Create(param);
+        }
+
+        if (!new_buff)
+        {
+            return std::shared_ptr<KernelBuffer>();
+        }
+
+        if (param->getAddressQualifier() != KernelParam::AddressQualifier::Private)
+        {
+            std::shared_ptr<DeviceMemory> mem = program->createMemory(new_buff);
+
+            if (!mem)
+            {
+                return false;
+            }
+        }
+
+        iter_param->second = new_buff;
+
+        return new_buff;
+    }
+
     std::shared_ptr<KernelBuffer> Kernel::findBuffer(std::shared_ptr<KernelParam> param)
     {
         auto iter_param = params.find(param);
@@ -232,45 +305,21 @@ namespace HonoursProject
         return iter_param->second;
     }
 
-    bool Kernel::updateParam(std::shared_ptr<KernelParam> param, void * data, std::size_t size, std::size_t offset)
-    {
-        cl_int cl_error = CL_SUCCESS;
-
-        if (!param)
-        {
-            return false;
-        }
-
-        std::shared_ptr<KernelBuffer> buffer = params.at(param);
-
-        if (!buffer->setData(data, size, offset))
-        {
-            return false;
-        }
-
-        if (!program->updateBuffer(buffer, size * buffer->getElemSize(), offset * buffer->getElemSize()))
-        {
-            return false;
-        }
-
-        return true;
-    }
-
     bool Kernel::syncParam(std::shared_ptr<KernelParam> param, std::size_t size, std::size_t offset)
     {
-        if (!param)
+        std::shared_ptr<KernelBuffer> buffer = findBuffer(param);
+
+        if (!buffer)
         {
             return false;
         }
-
-        std::shared_ptr<KernelBuffer> buffer = params.at(param);
 
         if (!size)
         {
             size = buffer->getElemNum();
         }
 
-        if (!program->updateBuffer(buffer, size * buffer->getElemSize(), offset * buffer->getElemSize()))
+        if (!program->syncBuffer(buffer, size * buffer->getElemSize(), offset * buffer->getElemSize()))
         {
             return false;
         }

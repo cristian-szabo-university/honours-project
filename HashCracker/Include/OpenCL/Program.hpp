@@ -42,6 +42,12 @@ namespace HonoursProject
 
         std::shared_ptr<Kernel> findKernel(const std::string& name);
 
+        std::shared_ptr<DeviceMemory> createMemory(std::shared_ptr<KernelBuffer> buffer);
+
+        std::shared_ptr<DeviceMemory> findMemory(std::shared_ptr<KernelBuffer> buffer);
+
+        bool destroyMemory(std::shared_ptr<KernelBuffer> buffer);
+
         bool updateBuffer(std::shared_ptr<KernelBuffer> buffer, std::size_t size, std::size_t offset = 0);
 
         bool syncBuffer(std::shared_ptr<KernelBuffer> buffer, std::size_t size = 0, std::size_t offset = 0);

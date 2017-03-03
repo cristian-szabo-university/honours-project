@@ -2,6 +2,9 @@
 
 #include "OpenCL/KernelBuffer.hpp"
 #include "OpenCL/KernelParam.hpp"
+#include "OpenCL/Kernel.hpp"
+
+#include "Core/Logger.hpp"
 
 namespace HonoursProject
 {
@@ -103,7 +106,7 @@ namespace HonoursProject
             throw std::runtime_error("Error: Data type not found!");
         }
 
-        return iter->second->clone(param);
+        return iter->second->clone(param, 1);
     }
 
     bool KernelBuffer::Copy(std::shared_ptr<KernelBuffer> src_buff, std::shared_ptr<KernelBuffer> dst_buff, std::size_t size, std::size_t src_offset, std::size_t dst_offset)
@@ -113,6 +116,13 @@ namespace HonoursProject
             return false;
         }
 
-        return dst_buff->setData(src_buff->getData(src_offset), src_buff->getElemNum(), dst_offset);
+        if (!size ||
+            size + dst_offset > dst_buff->getElemNum() ||
+            size + src_offset > src_buff->getElemNum())
+        {
+            return false;
+        }
+
+        return dst_buff->setData(src_buff->getData(src_offset), size, dst_offset);
     }
 }

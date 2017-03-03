@@ -57,7 +57,7 @@ namespace HonoursProject
 
         std::shared_ptr<DeviceMemory> createMemory(std::shared_ptr<KernelParam> param, std::size_t size);
 
-        void destroyMemory(std::shared_ptr<DeviceMemory> mem);
+        bool destroyMemory(std::shared_ptr<DeviceMemory> mem);
 
         std::uint64_t getTotalGlobalMemSize();
 

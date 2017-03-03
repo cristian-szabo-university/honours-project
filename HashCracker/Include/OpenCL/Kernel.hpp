@@ -5,6 +5,7 @@
 #include "OpenCL/Program.hpp"
 #include "OpenCL/KernelParam.hpp"
 #include "OpenCL/KernelBuffer.hpp"
+#include "OpenCL/DeviceMemory.hpp"
 
 namespace HonoursProject
 {
@@ -39,9 +40,11 @@ namespace HonoursProject
 
         std::shared_ptr<KernelParam> findParam(const std::string& name);
 
+        std::shared_ptr<KernelBuffer> createBuffer(std::shared_ptr<KernelParam> param, std::size_t size = 1);
+
         std::shared_ptr<KernelBuffer> findBuffer(std::shared_ptr<KernelParam> param);
 
-        bool updateParam(std::shared_ptr<KernelParam> param, void* data, std::size_t size, std::size_t offset = 0);
+        bool updateParam(std::shared_ptr<KernelParam> param, std::size_t size, std::size_t offset = 0);
 
         bool syncParam(std::shared_ptr<KernelParam> param, std::size_t size = 0, std::size_t offset = 0);
 
@@ -55,12 +58,14 @@ namespace HonoursProject
                 return false;
             }
 
-            if (param->getType() != KernelBuffer::CleanTypeName<T>())
+            std::shared_ptr<TKernelBufferValue<T>> cast_ptr = std::dynamic_pointer_cast<TKernelBufferValue<T>>(params.at(param));
+
+            if (!cast_ptr || !cast_ptr->set(value))
             {
                 return false;
             }
 
-            return updateParam(param, (void*)&value, 1);
+            return updateParam(param, 1);
         }
 
         template<class T>
@@ -95,12 +100,44 @@ namespace HonoursProject
                 return false;
             }
 
-            if (param->getType() != KernelBuffer::CleanTypeName<T*>())
+            std::shared_ptr<KernelBuffer> buffer = findBuffer(param);
+            std::shared_ptr<DeviceMemory> src_mem = program->findMemory(buffer);
+
+            std::shared_ptr<TKernelBufferArray<T>> cast_ptr = std::dynamic_pointer_cast<TKernelBufferArray<T>>(buffer);
+
+            if (!cast_ptr)
             {
                 return false;
             }
 
-            return updateParam(param, (void*)values.data(), values.size(), offset);
+            std::size_t new_size = values.size() + offset;
+
+            if (new_size > cast_ptr->getElemNum())
+            {
+                std::shared_ptr<KernelBuffer> new_buffer = createBuffer(param, new_size);
+                std::shared_ptr<DeviceMemory> dst_mem = program->findMemory(new_buffer);
+
+                if (offset && !KernelBuffer::Copy(buffer, new_buffer, offset))
+                {
+                    return false;
+                }
+
+                if (offset && !DeviceMemory::Copy(src_mem, dst_mem, offset * buffer->getElemSize()))
+                {
+                    return false;
+                }
+
+                program->destroyMemory(buffer);
+
+                cast_ptr = std::dynamic_pointer_cast<TKernelBufferArray<T>>(new_buffer);
+            }
+
+            if (!cast_ptr->set(values, offset))
+            {
+                return false;
+            }
+
+            return updateParam(param, values.size(), offset);
         }
 
         template<class T>
@@ -113,11 +150,19 @@ namespace HonoursProject
                 return false;
             }
 
-            std::shared_ptr<TKernelBufferArray<T>> cast_ptr = std::dynamic_pointer_cast<TKernelBufferArray<T>>(params.at(param));
+            std::shared_ptr<TKernelBufferArray<T>> cast_ptr = std::dynamic_pointer_cast<TKernelBufferArray<T>>(findBuffer(param));
 
             if (!cast_ptr)
             {
                 return false;
+            }
+
+            if (cast_ptr->readPending())
+            {
+                if (!syncParam(param, cast_ptr->getElemNum(), offset))
+                {
+                    return false;
+                }
             }
 
             value = cast_ptr->get(offset);

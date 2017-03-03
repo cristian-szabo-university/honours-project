@@ -10,6 +10,10 @@ project (HonoursProject VERSION 1.0.0)
 
 include (ExternalProject)
 
+if (EXTERN_VERSION)
+    set (PROJECT_VERSION ${EXTERN_VERSION})
+endif ()
+
 if (${PROJECT_SOURCE_DIR} STREQUAL ${PROJECT_BINARY_DIR})
 	message(FATAL_ERROR "In-tree builds are not supported; please run cmake in a separate build directory.")
 endif ()
@@ -178,8 +182,12 @@ install (EXPORT ${TARGET_NAME}
 #
 ###############################################################################
     
-if (PLATFORM_NAME)
+if (EXTERN_PLATFORM_NAME)
     set (CPACK_SYSTEM_NAME ${PLATFORM_NAME})
+endif ()
+
+if (EXTERN_PROJECT_VERSION)
+    set (CPACK_PACKAGE_VERSION ${EXTERN_PROJECT_VERSION})
 endif ()
 
 if (WIN32)
@@ -187,15 +195,13 @@ if (WIN32)
 else ()
     set (CPACK_GENERATOR "TGZ")
 endif ()
+
 set (CPACK_PACKAGE_NAME ${CMAKE_PROJECT_NAME})
 set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "Honours Project for Computing School at UWS")
 set (CPACK_PACKAGE_VENDOR "B00233705")
 set (CPACK_PACKAGE_CONTACT ${CPACK_PACKAGE_VENDOR})
 set (CPACK_PACKAGE_DESCRIPTION_FILE "${PROJECT_SOURCE_DIR}/README.md")
 set (CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
-set (CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
-set (CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
-set (CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
 
 set (CPACK_COMPONENT_HEADERS_DEPENDS Binaries Libraries)
 set (CPACK_COMPONENT_APPLICATIONS_DEPENDS Binaries)

@@ -2,7 +2,7 @@ env:
   global:
     - CONFIGURATION=Release
     - CMAKE_URL="https://cmake.org/files/v3.7/cmake-3.7.2-Linux-x86_64.tar.gz"
-    - CMAKE_OPTIONS="-DCMAKE_INSTALL_PREFIX=${TRAVIS_BUILD_DIR}/Install -DCMAKE_BUILD_TYPE=${CONFIGURATION}"
+    - CMAKE_OPTIONS="-DCMAKE_INSTALL_PREFIX=${TRAVIS_BUILD_DIR}/Install -DCMAKE_BUILD_TYPE=${CONFIGURATION} -DCPACK_GENERATOR=TGZ"
     - CXX_FLAGS="-std=c++11"
 
 matrix:
@@ -19,7 +19,7 @@ matrix:
               - mesa-common-dev
               - g++-5
       env:
-         - ENV_CMAKE_OPTIONS="-DPLATFORM_NAME=Linux-x86"
+         - ENV_CMAKE_OPTIONS="-DCPACK_SYSTEM_NAME=Linux-x86"
          - ENV_CXX_FLAGS="-m32"
     - os: linux
       sudo: false
@@ -34,7 +34,7 @@ matrix:
               - g++-5
               - g++-5-multilib
       env:
-        - ENV_CMAKE_OPTIONS="-DPLATFORM_NAME=Linux-x64"
+        - ENV_CMAKE_OPTIONS="-DCPACK_SYSTEM_NAME=Linux-x64"
         - ENV_CXX_FLAGS="-m64"
 
 cache:
@@ -44,6 +44,11 @@ cache:
     - ${TRAVIS_BUILD_DIR}/Build/Extern/Source/Docopt
 
 install:
+  - |    
+    if [ ${TRAVIS_TAG} ]; then
+      export PROJECT_VERSION="$(echo ${TRAVIS_TAG} | awk '{print substr($1,2)}')"
+      export CMAKE_OPTIONS=${CMAKE_OPTIONS}" -DCPACK_PACKAGE_VERSION=${PROJECT_VERSION}.${TRAVIS_BUILD_NUMBER}"
+    fi
   - |
     if [ ! -f "${TRAVIS_BUILD_DIR}/tmp/cmake/cached" ]; then
       mkdir -p ${TRAVIS_BUILD_DIR}/tmp/cmake

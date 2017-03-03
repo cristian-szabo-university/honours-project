@@ -67,7 +67,7 @@ before_script:
 script:    
   - cmake --build ./Build --target all
     
-after_script:
+before_deploy:
   - cmake --build ./Build --target package
 
 deploy:

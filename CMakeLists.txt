@@ -181,20 +181,6 @@ install (EXPORT ${TARGET_NAME}
 #   CPACK
 #
 ###############################################################################
-    
-if (EXTERN_PLATFORM_NAME)
-    set (CPACK_SYSTEM_NAME ${PLATFORM_NAME})
-endif ()
-
-if (EXTERN_PROJECT_VERSION)
-    set (CPACK_PACKAGE_VERSION ${EXTERN_PROJECT_VERSION})
-endif ()
-
-if (WIN32)
-    set (CPACK_GENERATOR "NSIS")
-else ()
-    set (CPACK_GENERATOR "TGZ")
-endif ()
 
 set (CPACK_PACKAGE_NAME ${CMAKE_PROJECT_NAME})
 set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "Honours Project for Computing School at UWS")

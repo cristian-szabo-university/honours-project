@@ -68,7 +68,7 @@ namespace HonoursProject
 
         std::list<double> exec_ms;
 
-        std::list< std::pair<std::uint32_t, std::uint64_t> > speed_ms;
+        std::list< std::pair<std::uint64_t, std::uint64_t> > speed_ms;
 
         virtual void preKernelExecute(std::uint32_t inner_loop_left, std::uint32_t inner_loop_pos);
 

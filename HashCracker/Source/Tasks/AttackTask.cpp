@@ -175,10 +175,10 @@ namespace HonoursProject
 
     double AttackTask::getAvgSpeedTime()
     {
-        std::pair<std::uint32_t, std::uint64_t> result;
+        std::pair<std::uint64_t, std::uint64_t> result;
 
-        result = std::accumulate(speed_ms.begin(), speed_ms.end(), std::make_pair(0u, 0ull), 
-            [](std::pair<std::uint32_t, std::uint64_t> a, std::pair<std::uint32_t, std::uint64_t> b)
+        result = std::accumulate(speed_ms.begin(), speed_ms.end(), std::make_pair(0ull, 0ull), 
+            [](std::pair<std::uint64_t, std::uint64_t> a, std::pair<std::uint64_t, std::uint64_t> b)
         {
             return std::make_pair(a.first + b.first, a.second + b.second);
         });

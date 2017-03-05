@@ -159,15 +159,16 @@ namespace HonoursProject
             return false;
         }
 
-        std::copy(prog->build_options.begin(), prog->build_options.end(), std::inserter(build_options, build_options.end()));
+        std::map<std::string, std::string> new_build_opts;
+        std::copy(prog->build_options.begin(), prog->build_options.end(), std::inserter(new_build_opts, new_build_opts.end()));
 
         for (auto opt : build_opts)
         {
-            auto iter_opt = build_options.find(opt.first);
+            auto iter_opt = new_build_opts.find(opt.first);
 
-            if (iter_opt == build_options.end())
+            if (iter_opt == new_build_opts.end())
             {
-                build_options.insert(opt);
+                new_build_opts.insert(opt);
             }
             else
             {
@@ -178,13 +179,13 @@ namespace HonoursProject
             }
         }
 
-        std::vector<std::string> new_build_opts;
-        for (auto opt : build_options)
+        std::vector<std::string> new_build_options;
+        for (auto opt : new_build_opts)
         {
-            new_build_opts.push_back(opt.first + (opt.second.empty() ? "" : "=") + opt.second);
+            new_build_options.push_back(opt.first + (opt.second.empty() ? "" : "=") + opt.second);
         }
 
-        if (!create(prog->source, new_build_opts, prog->cmd_queue_props))
+        if (!create(prog->source, new_build_options, prog->cmd_queue_props))
         {
             return false;
         }
@@ -199,7 +200,10 @@ namespace HonoursProject
                 std::shared_ptr<KernelParam> dst_param = new_kernel->getParamAt(index);
                 std::shared_ptr<KernelBuffer> buffer = old_kernel->findBuffer(src_param);
 
-                if (!new_kernel->createBuffer(src_param, buffer->getElemNum()))
+                dst_param->setAccessQualifier(src_param->getAccessQualifier());
+                dst_param->setAddressQualifier(src_param->getAddressQualifier());
+
+                if (!new_kernel->createBuffer(dst_param, buffer->getElemNum()))
                 {
                     continue;
                 }
@@ -308,6 +312,11 @@ namespace HonoursProject
 
     bool Program::destroyMemory(std::shared_ptr<KernelBuffer> buffer)
     {
+        if (!buffer)
+        {
+            return true;
+        }
+
         auto iter_buf = buffers.find(buffer);
 
         if (iter_buf == buffers.end())
@@ -435,6 +444,11 @@ namespace HonoursProject
         cl_int cl_error = CL_SUCCESS;
 
         std::shared_ptr<DeviceMemory> mem = findMemory(buffer);
+
+        if (!mem->isReady())
+        {
+            return false;
+        }
 
         if (offset + size > mem->getSize())
         {

@@ -92,7 +92,7 @@ namespace HonoursProject
             break;
 
         case CL_KERNEL_ARG_ACCESS_NONE:
-            access_qualifier = AccessQualifier::ReadWrite;
+            access_qualifier = AccessQualifier::ReadOnly;
             break;
         }
 
@@ -155,9 +155,22 @@ namespace HonoursProject
         return auto_sync;
     }
 
+    void KernelParam::setAddressQualifier(AddressQualifier address_qualifier)
+    {
+        this->address_qualifier = address_qualifier;
+    }
+
     KernelParam::AddressQualifier KernelParam::getAddressQualifier()
     {
         return address_qualifier;
+    }
+
+    void KernelParam::setAccessQualifier(AccessQualifier access_qualifier)
+    {
+        if (address_qualifier != AddressQualifier::Private)
+        {
+            this->access_qualifier = access_qualifier;
+        }
     }
 
     KernelParam::AccessQualifier KernelParam::getAccessQualifier()
@@ -188,6 +201,8 @@ namespace HonoursProject
             {
                 return false;
             }
+
+            dst_buf->setWriteFlag(false);
         }
 
         return true;

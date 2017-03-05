@@ -250,6 +250,11 @@ namespace HonoursProject
 
     std::shared_ptr<KernelBuffer> Kernel::createBuffer(std::shared_ptr<KernelParam> param, std::size_t size)
     {
+        if (param->getKernel()->getName() != name)
+        {
+            return std::shared_ptr<KernelBuffer>();
+        }
+
         auto iter_param = params.find(param);
 
         if (iter_param == params.end())
@@ -285,6 +290,11 @@ namespace HonoursProject
             if (!mem)
             {
                 return false;
+            }
+
+            if (iter_param->second)
+            {
+                program->destroyMemory(iter_param->second);
             }
         }
 

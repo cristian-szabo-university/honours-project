@@ -131,8 +131,6 @@ namespace HonoursProject
                 case 'a':
                     result.push_back(HonoursProject::Charset::allLetters);
                     break;
-                default:
-                    break;
                 }
             }
         }

@@ -42,9 +42,7 @@ namespace HonoursProject
         KernelBuffer::MakeDataType(KernelPlatform::message_prefix_t()),
         KernelBuffer::MakeDataType(std::vector<KernelPlatform::message_prefix_t>()),
         KernelBuffer::MakeDataType(KernelPlatform::message_index_t()),
-        KernelBuffer::MakeDataType(std::vector<KernelPlatform::message_index_t>()),
-        KernelBuffer::MakeDataType(KernelPlatform::message_digest_t()),
-        KernelBuffer::MakeDataType(std::vector<KernelPlatform::message_digest_t>()),
+        KernelBuffer::MakeDataType(std::vector<KernelPlatform::message_index_t>())
     };
 
     KernelBuffer::KernelBuffer(std::shared_ptr<KernelParam> param)
@@ -79,7 +77,9 @@ namespace HonoursProject
 
     void KernelBuffer::setReadFlag(bool status)
     {
-        if (param->getAddressQualifier() != KernelParam::AddressQualifier::Private)
+        if (param->getAddressQualifier() != KernelParam::AddressQualifier::Private &&
+            (param->getAccessQualifier() == KernelParam::AccessQualifier::ReadWrite ||
+            param->getAccessQualifier() == KernelParam::AccessQualifier::WriteOnly))
         {
             read_flag = status;
         }

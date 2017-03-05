@@ -39,13 +39,26 @@ namespace HonoursProject
         virtual std::size_t getElemNum() = 0;
 
         template<class T>
+        static bool HasDataType()
+        {
+            std::string type_name = CleanTypeName<T>();
+
+            if (!data_types.count(type_name))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        template<class T>
         static void RegisterDataType()
         {
             std::string type_name = CleanTypeName<T>();
-            data_types.insert(std::make_pair(type_name, std::dynamic_pointer_cast<KernelBuffer>(std::make_shared<TKernelBufferValue<T>>())));
+            data_types.insert(std::make_pair(type_name, std::dynamic_pointer_cast<KernelBuffer>(std::make_shared<TKernelBufferValue<T>>(std::shared_ptr<KernelParam>()))));
 
             type_name = CleanTypeName<T*>();
-            data_types.insert(std::make_pair(type_name, std::dynamic_pointer_cast<KernelBuffer>(std::make_shared<TKernelBufferArray<T>>())));
+            data_types.insert(std::make_pair(type_name, std::dynamic_pointer_cast<KernelBuffer>(std::make_shared<TKernelBufferArray<T>>(std::shared_ptr<KernelParam>(), 1))));
         }
 
         template< class T >
@@ -142,8 +155,6 @@ namespace HonoursProject
         TKernelBufferValue(std::shared_ptr<KernelParam> param)
             : KernelBuffer(param)
         {
-            memset(&value, 1, getElemSize());
-
             type = CleanTypeName<T>();
         }
 
@@ -309,4 +320,6 @@ namespace HonoursProject
         std::vector<T> values;
 
     };
+
+
 }

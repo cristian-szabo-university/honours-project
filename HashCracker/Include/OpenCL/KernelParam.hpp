@@ -52,7 +52,11 @@ namespace HonoursProject
 
         bool autoSyncEnable();
 
+        void setAddressQualifier(AddressQualifier address_qualifier);
+
         AddressQualifier getAddressQualifier();
+
+        void setAccessQualifier(AccessQualifier access_qualifier);
 
         AccessQualifier getAccessQualifier();
 

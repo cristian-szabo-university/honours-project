@@ -15,6 +15,7 @@ namespace HonoursProject
     template<class Task>
     const HASHCRACK_PUBLIC std::string MD5_HashFunc<Task>::name = "MD5";
 
+    template<>
     const HASHCRACK_PUBLIC ProgramEntry& MD5_HashFunc<Bruteforce_HashProcess>::program = bruteforce_md5;
 
     // const ProgramEntry& MD5_HashFunc<Dictionary_HashTask>::program = dictionary_md5;

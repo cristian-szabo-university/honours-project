@@ -8,46 +8,18 @@
 #include "OpenCL/Kernel.hpp"
 #include "OpenCL/Device.hpp"
 
+#include "Tasks/KernelTask.hpp"
+#include "Tasks/SetupTask.hpp"
+
 namespace HonoursProject
 {
-    AttackTask::AttackTask(std::shared_ptr<HashCracker> hash_cracker, std::shared_ptr<Kernel> kernel_hash_crack)
-        : 
-        hash_cracker(hash_cracker),
-        kernel_hash_crack(kernel_hash_crack),
-        batch_size(0), 
-        batch_offset(0), 
-        inner_loop_size(0), 
-        inner_loop_step(0), 
-        inner_loop_pos(0),
-        device(kernel_hash_crack->getProgram()->getDevice())
-    {
-        std::vector<bool> param_check =
-        {
-            kernel_hash_crack->hasParam("inner_loop_size"),
-            kernel_hash_crack->hasParam("msg_batch_size"),
-            kernel_hash_crack->hasParam("msg_batch_offset"),
-            kernel_hash_crack->hasParam("msg"),
-            kernel_hash_crack->hasParam("msg_index"),
-            kernel_hash_crack->hasParam("msg_digest")
-        };
-
-        for (bool test : param_check)
-        {
-            if (!test)
-            {
-                throw std::runtime_error("Kernel does not have a required parameter!");
-            }
-        }
-
-        kernel_hash_crack->findParam("msg_index")->toggleAutoSync();
-    }
-
     AttackTask::~AttackTask()
     {
     }
 
-    std::string AttackTask::run()
+    std::string AttackTask::run(std::shared_ptr<HashCracker> hash_cracker)
     {
+        std::shared_ptr<Device> device = kernel_hash_crack->getProgram()->getDevice();
         std::vector<KernelPlatform::message_index_t> hash_cracked(1);
 
         for (inner_loop_pos = 0; inner_loop_pos < inner_loop_size; inner_loop_pos += inner_loop_step)
@@ -118,6 +90,27 @@ namespace HonoursProject
         return std::string();
     }
 
+    void AttackTask::transfer(std::shared_ptr<BaseTask> task)
+    {
+        {
+            std::shared_ptr<KernelTask> cast_ptr = std::dynamic_pointer_cast<KernelTask>(task);
+
+            if (cast_ptr)
+            {
+                kernel_hash_crack = cast_ptr->getKernel();
+            }
+        }
+
+        {
+            std::shared_ptr<SetupTask> cast_ptr = std::dynamic_pointer_cast<SetupTask>(task);
+
+            if (cast_ptr)
+            {
+                setInnerLoopSize(cast_ptr->getInnerLoopSize());
+            }
+        }
+    }
+
     void AttackTask::setBatchSize(std::uint32_t batch_size)
     {
         this->batch_size = batch_size;
@@ -133,8 +126,6 @@ namespace HonoursProject
     void AttackTask::setBatchOffset(std::uint64_t batch_offset)
     {
         this->batch_offset = batch_offset;
-
-        kernel_hash_crack->setParam("msg_batch_offset", batch_offset);
     }
 
     std::uint64_t AttackTask::getBatchOffset()
@@ -187,11 +178,6 @@ namespace HonoursProject
         double speed_tm = (double) result.second / speed_ms.size();
 
         return (speed_cnt / speed_tm);
-    }
-
-    std::shared_ptr<Device> AttackTask::getDevice()
-    {
-        return device;
     }
 
     void AttackTask::setKernel(std::shared_ptr<Kernel> kernel)

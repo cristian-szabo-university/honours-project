@@ -1,21 +1,15 @@
 #pragma once
 
-#include "Core/HashCracker.hpp"
-
 #include "Tasks/Task.hpp"
 
 namespace HonoursProject
 {
-    class HashCracker;
-    class AttackTask;
-    class Device;
     class HashFunc;
+    class Kernel;
 
-    class HASHCRACK_PUBLIC SetupTask : public TTask<std::shared_ptr<AttackTask>>
+    class HASHCRACK_PUBLIC SetupTask : public TTask<bool, std::vector<std::string>>
     {
     public:
-
-        SetupTask(std::shared_ptr<HashCracker> hash_cracker, std::shared_ptr<Device> device, const std::string& hash_msg, std::shared_ptr<HashFunc> hash_func);
 
         virtual ~SetupTask();
 
@@ -24,14 +18,6 @@ namespace HonoursProject
         std::uint32_t getInnerLoopSize();
 
     protected:
-
-        std::shared_ptr<HashCracker> hash_cracker;
-
-        std::shared_ptr<HashFunc> hash_func;
-
-        std::string hash_msg;
-
-        std::shared_ptr<Device> device;
 
         std::uint64_t total_batch_size;
 

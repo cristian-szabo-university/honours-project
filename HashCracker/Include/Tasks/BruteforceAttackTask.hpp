@@ -10,16 +10,11 @@ namespace HonoursProject
     {
     public:
 
-        BruteforceAttackTask(
-            std::shared_ptr<HashCracker> hash_cracker, 
-            std::shared_ptr<Kernel> kernel_gen_word_prefix, 
-            std::shared_ptr<Kernel> kernel_gen_word_suffix, 
-            std::shared_ptr<Kernel> kernel_hash_crack, 
-            std::vector<Charset> charsets);
-
         virtual ~BruteforceAttackTask();
 
-        virtual std::string run() override;
+        virtual std::string run(std::shared_ptr<HashCracker> hash_cracker) override;
+
+        virtual void transfer(std::shared_ptr<BaseTask> task) override;
 
         virtual void setBatchSize(std::uint32_t batch_size) override;
 

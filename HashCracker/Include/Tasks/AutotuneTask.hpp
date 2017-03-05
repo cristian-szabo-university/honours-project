@@ -5,24 +5,19 @@
 namespace HonoursProject
 {
     class AttackTask;
+    class Kernel;
 
-    class AutotuneTask : public NoReturnTask
+    class AutotuneTask : public TTask<void, std::shared_ptr<AttackTask>, double>
     {
     public:
 
-        AutotuneTask(std::shared_ptr<AttackTask> attack_task, double target_speed);
-
         virtual ~AutotuneTask();
 
-        virtual void run() override;
+        virtual void run(std::shared_ptr<AttackTask> attack_task, double target_speed) override;
 
     private:
 
-        std::shared_ptr<AttackTask> attack_task;
-
-        double target_speed;
-
-        double try_execute(std::uint32_t device_speed, std::uint32_t kernel_loops, double time_ratio = 1000000.0);
+        double try_execute(std::shared_ptr<Kernel> kernel, std::uint32_t device_speed, std::uint32_t kernel_loops);
 
     };
 }

@@ -8,9 +8,11 @@ namespace HonoursProject
 
         virtual ~BaseTask();
 
+        virtual void transfer(std::shared_ptr<BaseTask> task);
+
     };
 
-    template<class T>
+    template<class T, class... A>
     class TTask : public BaseTask
     {
     public:
@@ -19,7 +21,7 @@ namespace HonoursProject
         {
         }
 
-        virtual T run() = 0;
+        virtual T run(A ...args) = 0;
 
     };
 

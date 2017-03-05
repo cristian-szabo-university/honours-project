@@ -9,16 +9,17 @@ namespace HonoursProject
     class HashCracker;
     class Kernel;
     class Device;
+    class KernelTask;
 
-    class HASHCRACK_PUBLIC AttackTask : public TTask<std::string>
+    class HASHCRACK_PUBLIC AttackTask : public TTask<std::string, std::shared_ptr<HashCracker>>
     {
     public:
 
-        AttackTask(std::shared_ptr<HashCracker> hash_cracker, std::shared_ptr<Kernel> kernel_hash_crack);
-
         virtual ~AttackTask();
 
-        virtual std::string run() override;
+        virtual std::string run(std::shared_ptr<HashCracker> hash_cracker) override;
+
+        virtual void transfer(std::shared_ptr<BaseTask> task) override;
 
         virtual void setBatchSize(std::uint32_t batch_size);
 
@@ -40,17 +41,11 @@ namespace HonoursProject
 
         double getAvgSpeedTime();
 
-        std::shared_ptr<Device> getDevice();
-
         void setKernel(std::shared_ptr<Kernel> kernel);
 
         std::shared_ptr<Kernel> getKernel();
 
     protected:
-
-        std::shared_ptr<HashCracker> hash_cracker;
-
-        std::shared_ptr<Device> device;
 
         std::shared_ptr<Kernel> kernel_hash_crack;
 

@@ -7,54 +7,24 @@
 #include "OpenCL/Kernel.hpp"
 #include "OpenCL/Device.hpp"
 
+#include "Tasks/KernelTask.hpp"
+#include "Tasks/BruteforceKernelTask.hpp"
+
 namespace HonoursProject
 {
-    BruteforceAttackTask::BruteforceAttackTask(
-        std::shared_ptr<HashCracker> hash_cracker,
-        std::shared_ptr<Kernel> kernel_gen_word_prefix, 
-        std::shared_ptr<Kernel> kernel_gen_word_suffix, 
-        std::shared_ptr<Kernel> kernel_hash_crack, 
-        std::vector<Charset> charsets)
-        : 
-        AttackTask(hash_cracker, kernel_hash_crack),
-        kernel_gen_word_prefix(kernel_gen_word_prefix),
-        kernel_gen_word_suffix(kernel_gen_word_suffix),
-        charsets(charsets)
-    {
-        std::vector<bool> param_check =
-        {
-            kernel_gen_word_prefix->hasParam("msg_prefix"),
-            kernel_gen_word_prefix->hasParam("msg_batch_size"),
-            kernel_gen_word_prefix->hasParam("msg_batch_offset"),
-
-            kernel_gen_word_suffix->hasParam("msg"),
-            kernel_gen_word_suffix->hasParam("msg_batch_size"),
-            kernel_gen_word_suffix->hasParam("msg_batch_offset")
-        };
-
-        for (bool test : param_check)
-        {
-            if (!test)
-            {
-                throw std::runtime_error("Kernel does not have a required parameter!");
-            }
-        }
-
-        kernel_gen_word_prefix->findParam("msg_prefix")->toggleAutoSync();
-        kernel_gen_word_suffix->findParam("msg")->toggleAutoSync();
-    }
-
     BruteforceAttackTask::~BruteforceAttackTask()
     {
     }
 
-    std::string BruteforceAttackTask::run()
+    std::string BruteforceAttackTask::run(std::shared_ptr<HashCracker> hash_cracker)
     {
+        std::shared_ptr<Device> device = kernel_hash_crack->getProgram()->getDevice();
+
         kernel_gen_word_suffix->execute(batch_size, device->getMaxWorkGroupSize());
 
         KernelParam::Copy("msg", kernel_gen_word_suffix, kernel_hash_crack, batch_size);
 
-        AttackTask::run();
+        AttackTask::run(hash_cracker);
 
         if (!msg_idx.found)
         {
@@ -68,6 +38,22 @@ namespace HonoursProject
         hash_rank += inner_loop_pos + msg_idx.inner_loop_pos;
 
         return Charset::GetMsgFromIndex(hash_rank, charsets);
+    }
+
+    void BruteforceAttackTask::transfer(std::shared_ptr<BaseTask> task)
+    {
+        AttackTask::transfer(task);
+
+        std::shared_ptr<BruteforceKernelTask> cast_task = std::dynamic_pointer_cast<BruteforceKernelTask>(task);
+
+        if (cast_task)
+        {
+            charsets = cast_task->getCharsets();
+
+            kernel_gen_word_prefix = cast_task->getGenWordPrefixKernel();
+
+            kernel_gen_word_suffix = cast_task->getGenWordSuffixKernel();
+        }
     }
 
     void BruteforceAttackTask::setBatchSize(std::uint32_t batch_size)
@@ -95,6 +81,8 @@ namespace HonoursProject
 
     void BruteforceAttackTask::preKernelExecute(std::uint32_t inner_loop_left, std::uint32_t inner_loop_pos)
     {
+        std::shared_ptr<Device> device = kernel_gen_word_prefix->getProgram()->getDevice();
+
         kernel_gen_word_prefix->setParam("msg_batch_size", inner_loop_left);
 
         kernel_gen_word_prefix->setParam("msg_batch_offset", inner_loop_pos);

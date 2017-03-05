@@ -8,19 +8,31 @@ namespace HonoursProject
 {
     class Charset;
 
-    class BruteforceSetupTask : public SetupTask
+    class HASHCRACK_PUBLIC BruteforceSetupTask : public SetupTask
     {
     public:
 
-        BruteforceSetupTask(std::shared_ptr<HashCracker> hash_cracker, std::shared_ptr<Device> device, const std::string& hash_msg, std::shared_ptr<HashFunc> hash_func, const std::string& mask);
-
         virtual ~BruteforceSetupTask();
 
-        virtual std::shared_ptr<AttackTask> run() override;
+        virtual bool run(std::vector<std::string> input) override;
 
-    private:
+        std::vector<Charset> getCharsets();
+
+        std::uint32_t getMessageSize();
+
+        std::uint32_t getMessagePrefix();
+
+        std::uint32_t getMessageSuffix();
+
+    protected:
 
         std::vector<Charset> charsets;
+
+        std::uint32_t message_size;
+        
+        std::uint32_t msg_prefix_size;
+        
+        std::uint32_t msg_suffix_size;
 
     };
 }

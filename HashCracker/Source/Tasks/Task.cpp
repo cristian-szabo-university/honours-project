@@ -12,6 +12,10 @@ namespace HonoursProject
     {
     }
 
+    void BaseTask::transfer(std::shared_ptr<BaseTask> task)
+    {
+    }
+
     Task::~Task()
     {
     }

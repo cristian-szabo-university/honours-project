@@ -10,16 +10,11 @@
 
 namespace HonoursProject
 {
-    WorkDispatchTask::WorkDispatchTask(std::shared_ptr<HashCracker> hash_cracker, std::vector<std::shared_ptr<AttackTask>> attack_tasks, std::uint64_t total_batch_size)
-        : hash_cracker(hash_cracker), attack_tasks(attack_tasks), total_batch_size(total_batch_size), total_message_tested(0)
-    {
-    }
-
     WorkDispatchTask::~WorkDispatchTask()
     {
     }
 
-    std::string WorkDispatchTask::run()
+    std::string WorkDispatchTask::run(std::shared_ptr<HashCracker> hash_cracker, std::vector<std::shared_ptr<AttackTask>> attack_tasks, std::uint64_t total_batch_size)
     {
         std::string hash_plain;
 
@@ -61,7 +56,7 @@ namespace HonoursProject
 
                 batch_offset += batch_size;
 
-                attack_futures.push_back(std::async(std::launch::async, &AttackTask::run, task.get()));
+                attack_futures.push_back(std::async(std::launch::async, &AttackTask::run, task.get(), hash_cracker));
             }
 
             while (attack_futures.size() > 0)
@@ -107,35 +102,5 @@ namespace HonoursProject
     std::uint64_t WorkDispatchTask::getTotalMessageTested()
     {
         return total_message_tested;
-    }
-
-    double WorkDispatchTask::getExecTime(std::shared_ptr<Device> device)
-    {
-        double result = 0.0;
-
-        for (auto& attack_task : attack_tasks)
-        {
-            if (attack_task->getDevice()->getHandle()() == device->getHandle()())
-            {
-                result = attack_task->getAvgExecTime();
-            }
-        }
-
-        return result;
-    }
-
-    double WorkDispatchTask::getSpeedTime(std::shared_ptr<Device> device)
-    {
-        double result = 0.0;
-
-        for (auto& attack_task : attack_tasks)
-        {
-            if (attack_task->getDevice()->getHandle()() == device->getHandle()())
-            {
-                result += attack_task->getAvgSpeedTime();
-            }
-        }
-
-        return result;
     }
 }

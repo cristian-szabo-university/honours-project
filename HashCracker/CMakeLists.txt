@@ -42,6 +42,8 @@ set (TASKS_HEADER_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Include/Tasks/BruteforceAttackTask.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Include/Tasks/SetupTask.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Include/Tasks/BruteforceSetupTask.hpp   
+    ${CMAKE_CURRENT_SOURCE_DIR}/Include/Tasks/KernelTask.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Include/Tasks/BruteforceKernelTask.hpp    
     ${CMAKE_CURRENT_SOURCE_DIR}/Include/Tasks/WorkDispatchTask.hpp)
 
 set (HASHCRACK_HEADER_FILES
@@ -80,6 +82,8 @@ set (TASKS_SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Source/Tasks/BruteforceAttackTask.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Source/Tasks/SetupTask.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Source/Tasks/BruteforceSetupTask.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Source/Tasks/KernelTask.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Source/Tasks/BruteforceKernelTask.cpp    
     ${CMAKE_CURRENT_SOURCE_DIR}/Source/Tasks/WorkDispatchTask.cpp)
 
 set (HASHCRACK_SOURCE_FILES

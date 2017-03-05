@@ -5,7 +5,7 @@ inline void mark_hash(__global struct message_index_t* msg_index, const u32 msg_
     msg_index[0].inner_loop_pos = inner_loop_pos;
 }
 
-#if VECT_SIZE == 1
+#if VECTOR_SIZE == 1
 
 #define EQUAL_VECTOR(a,b)   \
     ((a) == (b))
@@ -21,7 +21,7 @@ inline void mark_hash(__global struct message_index_t* msg_index, const u32 msg_
   
 #endif
 
-#if VECT_SIZE == 2
+#if VECTOR_SIZE == 2
 
 #define EQUAL_VECTOR(a,b)   \
     (((a).s0 == (b).s0) ||  \
@@ -41,7 +41,7 @@ inline void mark_hash(__global struct message_index_t* msg_index, const u32 msg_
     
 #endif
 
-#if VECT_SIZE == 4
+#if VECTOR_SIZE == 4
 
 #define EQUAL_VECTOR(a,b)   \
     (((a).s0 == (b).s0) ||  \
@@ -69,7 +69,7 @@ inline void mark_hash(__global struct message_index_t* msg_index, const u32 msg_
     
 #endif
 
-#if VECT_SIZE == 8
+#if VECTOR_SIZE == 8
 
 #define EQUAL_VECTOR(a,b)   \
     (((a).s0 == (b).s0) ||  \
@@ -113,7 +113,7 @@ inline void mark_hash(__global struct message_index_t* msg_index, const u32 msg_
     
 #endif
 
-#if VECT_SIZE == 16
+#if VECTOR_SIZE == 16
 
 #define EQUAL_VECTOR(a,b) \
     (((a).s0 == (b).s0) ||  \

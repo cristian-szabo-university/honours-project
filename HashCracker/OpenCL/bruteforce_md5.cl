@@ -76,16 +76,16 @@ void crack_md5(
 
     const u32 search[4] =
     {
-        msg_digest[0].data[0],
-        msg_digest[0].data[1],
-        msg_digest[0].data[2],
-        msg_digest[0].data[3]
+        msg_digest[0].data[DIGEST_INDEX_0],
+        msg_digest[0].data[DIGEST_INDEX_1],
+        msg_digest[0].data[DIGEST_INDEX_2],
+        msg_digest[0].data[DIGEST_INDEX_3]
     };
 
-    u32 a_rev = search[0];
-    u32 b_rev = search[1];
-    u32 c_rev = search[2];
-    u32 d_rev = search[3];
+    u32 a_rev = msg_digest[0].data[0];
+    u32 b_rev = msg_digest[0].data[1];
+    u32 c_rev = msg_digest[0].data[2];
+    u32 d_rev = msg_digest[0].data[3];
 
     MD5_STEP_REV(MD5_I, b_rev, c_rev, d_rev, a_rev, w[ 9], MD5_K_64, MD5_ROUND_4_SHIFT_4);      /* 64 */
     MD5_STEP_REV(MD5_I, c_rev, d_rev, a_rev, b_rev, w[ 2], MD5_K_63, MD5_ROUND_4_SHIFT_3);      /* 63 */
@@ -109,13 +109,13 @@ void crack_md5(
     MD5_STEP_REV1(MD5_H, b_rev, c_rev, d_rev, a_rev, w[ 2], MD5_K_48, MD5_ROUND_3_SHIFT_4);     /* 48 */
     MD5_STEP_REV1(MD5_H, c_rev, d_rev, a_rev, b_rev, w[15], MD5_K_47, MD5_ROUND_3_SHIFT_3);     /* 47 */
 
-    u32 w0l = w[0];
+    u32 w0_init = w[0];
 
-    for (u32 inner_loop_pos = 0; inner_loop_pos < inner_loop_size; inner_loop_pos += VECT_SIZE)
+    for (u32 inner_loop_pos = 0; inner_loop_pos < inner_loop_size; inner_loop_pos += VECTOR_SIZE)
     {
-        const u32x w0r = msg_prefix[inner_loop_pos / VECT_SIZE].data;
+        const u32x w0_next = msg_prefix[inner_loop_pos / VECTOR_SIZE].data;
 
-        const u32x w0 = w0l | w0r;
+        const u32x w0 = w0_init | w0_next;
 
         const u32x pre_d = d_rev;
         const u32x pre_a = a_rev - w0;
@@ -203,8 +203,8 @@ void crack_md5(
         MD5_STEP_FAST(MD5_I, d, a, b, c, I_wbc3d, MD5_ROUND_4_SHIFT_2);      /* 62 */
         MD5_STEP_FAST(MD5_I, c, d, a, b, I_w2c3e, MD5_ROUND_4_SHIFT_3);      /* 63 */
         MD5_STEP_FAST(MD5_I, b, c, d, a, I_w9c3f, MD5_ROUND_4_SHIFT_4);      /* 64 */
-
-        COMPARE_DIGEST(a,b,c,d);
+       
+        COMPARE_DIGEST(a, d, c, b);
     }
 }
 
@@ -214,13 +214,12 @@ __kernel void hash_crack_4(
     __global struct message_index_t* msg_index,
     __global struct message_digest_t* msg_digest,
     const u32 inner_loop_size,
-    const u32 msg_batch_size,
-    const u32 msg_batch_offset)
+    const u32 msg_batch_size)
 {
     const u32 msg_batch_pos = get_global_id(0);
 
     if (msg_batch_pos >= msg_batch_size) return;
-
+  
     u32 w[16];
 
     w[0] = msg[msg_batch_pos].data[0];
@@ -251,8 +250,7 @@ __kernel void hash_crack_8(
     __global struct message_index_t* msg_index,
     __global struct message_digest_t* msg_digest,
     const u32 inner_loop_size,
-    const u32 msg_batch_size,
-    const u32 msg_batch_offset)
+    const u32 msg_batch_size)
 {
     const u32 msg_batch_pos = get_global_id(0);
 
@@ -288,8 +286,7 @@ __kernel void hash_crack_16(
     __global struct message_index_t* msg_index,
     __global struct message_digest_t* msg_digest,
     const u32 inner_loop_size,
-    const u32 msg_batch_size,
-    const u32 msg_batch_offset)
+    const u32 msg_batch_size)
 {
     const u32 msg_batch_pos = get_global_id(0);
 

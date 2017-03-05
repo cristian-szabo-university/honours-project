@@ -44,18 +44,16 @@ int Program::run()
 
     bool benchmark = args["benchmark"].asBool();
 
-    std::string hash_msg, attack_input;
-    HonoursProject::HashCracker::AttackMode attack_mode;
+    std::string hash_msg;
+    std::vector<std::string> attack_input;
 
     if (args["attack"].asBool())
     {
+        hash_msg = args["<hash>"].asString();
+
         if (args["bruteforce"].asBool())
         {
-            attack_mode = HonoursProject::HashCracker::AttackMode::Bruteforce;
-
-            hash_msg = args["<hash>"].asString();
-
-            attack_input = args["<input>"].asString();
+            attack_input.push_back(args["<input>"].asString());
         }
         else if (args["dictionary"].asBool())
         {
@@ -66,9 +64,7 @@ int Program::run()
     {
         if (args["bruteforce"].asBool())
         {
-            attack_mode = HonoursProject::HashCracker::AttackMode::Bruteforce;
-
-            attack_input = "?a?a?a?a?a?a?a?a";
+            attack_input.push_back("?a?a?a?a?a?a?a?a");
         }
         else if (args["dictionary"].asBool())
         {
@@ -82,7 +78,7 @@ int Program::run()
 
     if (args["md5"].asBool())
     {
-        hash_func = std::make_shared<HonoursProject::MD5_HashFunc>();
+        hash_func = std::make_shared<HonoursProject::MD5_HashFunc<HonoursProject::Bruteforce_HashProcess>>();
     }
     else if (args["sha1"].asBool())
     {
@@ -115,16 +111,18 @@ int Program::run()
     
     hash_cracker = std::make_shared<HonoursProject::HashCracker>(hash_msg, hash_func, benchmark);
     
-    cracked_future = hash_cracker->executeAttack(attack_mode, attack_input, device_filter);
+    HonoursProject::Logger::info("...:::=== Preparing Cracking Process ===:::...\n\n");
+
+    cracked_future = hash_cracker->executeAttack(attack_input, device_filter);
 
     if (benchmark)
     {
         cracked_future.get();
 
-        std::cout << std::endl << "---=== Benchmark Statistics ===---" << std::endl << std::endl;
+        HonoursProject::Logger::info("...:::=== Benchmark Statistics ===:::...\n\n");
 
         std::cout << std::setfill('.') << std::setw(25) << std::left << "Hash.Type";
-        std::cout << ": " << hash_cracker->getHashFunc() << std::endl;
+        std::cout << ": " << hash_cracker->getHashFunc()->type() << std::endl;
 
         double total_device_speed = 0.0, total_device_exec = 0.0;
 
@@ -145,45 +143,44 @@ int Program::run()
             std::cout << std::setfill('.') << std::setw(25) << std::left << "Speed.Device.Total";
             std::cout << ": " << format_display_speed(total_device_speed, total_device_exec) << std::endl;
         }
-
-        return 0;
-    }
-
-    char user_cmd = 0;
-    std::future_status console_status = std::future_status::ready;
-    std::future_status cracked_status;
-
-    do
-    {
-        cracked_status = cracked_future.wait_for(std::chrono::milliseconds(10));
-
-        if (console_status == std::future_status::ready)
-        {
-            console_future = std::async(std::launch::async, &ConsoleInput::run, console_task.get());
-        }
-
-        console_status = console_future.wait_for(std::chrono::milliseconds(10));
-
-        if (console_status == std::future_status::ready)
-        {
-            process_input_command(console_future.get());
-        }
-    }
-    while (hash_cracker->getStatus() != HonoursProject::HashCracker::Status::Aborted &&
-        hash_cracker->getStatus() != HonoursProject::HashCracker::Status::Cracked &&
-        hash_cracker->getStatus() != HonoursProject::HashCracker::Status::Idle);
-
-    std::string plain_msg = cracked_future.get();
-
-    if (!plain_msg.empty())
-    {
-        std::cout << std::endl << hash_msg << ": " << plain_msg << std::endl;
     }
     else
     {
-        if (hash_cracker->getStatus() == HonoursProject::HashCracker::Status::Idle)
+        char user_cmd = 0;
+        std::future_status console_status = std::future_status::ready;
+        std::future_status cracked_status;
+
+        do
         {
-            std::cout << std::endl << hash_msg << ": " << "Not found!" << std::endl;
+            cracked_status = cracked_future.wait_for(std::chrono::milliseconds(10));
+
+            if (console_status == std::future_status::ready)
+            {
+                console_future = std::async(std::launch::async, &ConsoleInput::run, console_task.get());
+            }
+
+            console_status = console_future.wait_for(std::chrono::milliseconds(10));
+
+            if (console_status == std::future_status::ready)
+            {
+                process_input_command(console_future.get());
+            }
+        } while (hash_cracker->getStatus() != HonoursProject::HashCracker::Status::Aborted &&
+            hash_cracker->getStatus() != HonoursProject::HashCracker::Status::Cracked &&
+            hash_cracker->getStatus() != HonoursProject::HashCracker::Status::Idle);
+
+        std::string plain_msg = cracked_future.get();
+
+        if (!plain_msg.empty())
+        {
+            std::cout << std::endl << hash_msg << ": " << plain_msg << std::endl;
+        }
+        else
+        {
+            if (hash_cracker->getStatus() == HonoursProject::HashCracker::Status::Idle)
+            {
+                std::cout << std::endl << hash_msg << ": " << "Not found!" << std::endl;
+            }
         }
     }
 
@@ -192,29 +189,47 @@ int Program::run()
  
 void Program::process_input_command(char cmd)
 {
+    std::stringstream ss;
+    ss.imbue(comma_locale);
+
     std::cout << std::endl;
 
     switch (cmd)
     {
     case 'p':
-        hash_cracker->setStatus(HonoursProject::HashCracker::Status::Paused);
+        {
+            hash_cracker->setStatus(HonoursProject::HashCracker::Status::Paused);
+
+            std::cout << "Pause cracking process ..." << std::endl;
+        }
         break;
 
     case 'r':
-        hash_cracker->setStatus(HonoursProject::HashCracker::Status::Running);
+        {
+            hash_cracker->setStatus(HonoursProject::HashCracker::Status::Running);
+
+            std::cout << "Resume cracking process ..." << std::endl;
+        }
         break;
 
     case 'q':
-        hash_cracker->setStatus(HonoursProject::HashCracker::Status::Aborted);
+        {
+            hash_cracker->setStatus(HonoursProject::HashCracker::Status::Aborted);
+
+            std::cout << "Stopping cracking process ..." << std::endl;
+        }
         break;
 
     case 's':
         {
+            std::cout << std::setfill('.') << std::setw(25) << std::left << "Cracking.Status";
+            std::cout << ": " << hash_cracker->getStatus() << std::endl;
+
             std::cout << std::setfill('.') << std::setw(25) << std::left << "Hash.Target";
             std::cout << ": " << hash_cracker->getHashMsg() << std::endl;
 
             std::cout << std::setfill('.') << std::setw(25) << std::left << "Hash.Type";
-            std::cout << ": " << hash_cracker->getHashFunc() << std::endl;
+            std::cout << ": " << hash_cracker->getHashFunc()->type() << std::endl;
 
             std::time_t start_time = std::chrono::system_clock::to_time_t(hash_cracker->getTimeStart());
 
@@ -226,8 +241,9 @@ void Program::process_input_command(char cmd)
             std::cout << std::setfill('.') << std::setw(25) << std::left << "Time.Estimated";
             std::cout << ": " << std::put_time(std::gmtime(&finish_time), "%D %T") << " " << format_display_time(hash_cracker->getTimeEstimated()) << std::endl;
 
-            std::cout << std::setfill('.') << std::setw(25) << std::left << "Progress";
-            std::cout << ": " << hash_cracker->getMessageProgress() << " / " << hash_cracker->getMessageTotal() << std::endl;
+            std::cout << std::setfill('.') << std::setw(25) << std::left << "Cracking.Progress";
+            ss << hash_cracker->getMessageProgress() << " / " << hash_cracker->getMessageTotal();
+            std::cout << ": " << ss.str() << std::endl;
 
             double total_device_speed = 0.0, total_device_exec = 0.0;
 
@@ -299,7 +315,6 @@ std::string Program::format_display_speed(double speed_time, double exec_time)
 
     std::uint32_t level = 0;
 
-    // ms to sec
     speed_time *= 1000.0;
 
     while (speed_time > 99999)

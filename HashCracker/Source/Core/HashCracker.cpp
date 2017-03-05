@@ -8,7 +8,9 @@
 
 #include "OpenCL/Device.hpp"
 
+#include "Tasks/KernelTask.hpp"
 #include "Tasks/SetupTask.hpp"
+#include "Tasks/AttackTask.hpp"
 #include "Tasks/BruteforceSetupTask.hpp"
 #include "Tasks/AttackTask.hpp"
 #include "Tasks/WorkDispatchTask.hpp"
@@ -23,10 +25,15 @@ namespace HonoursProject
         {
             throw std::runtime_error("Error: Hash message can't be empty!");
         }
+
+        work_dispatch = std::make_shared<WorkDispatchTask>();
     }
 
     HashCracker::~HashCracker()
     {
+        work_dispatch.reset();
+
+        attack_tasks.clear();
     }
 
     void HashCracker::setStatus(Status status)
@@ -49,26 +56,9 @@ namespace HonoursProject
         return hash_msg;
     }
 
-    std::string HashCracker::getHashFunc()
+    std::shared_ptr<HashFunc> HashCracker::getHashFunc()
     {
-        std::string result;
-
-        switch (hash_func->type())
-        {
-        case HashFunc::Type::MD5:
-            result = "MD5";
-            break;
-
-        case HashFunc::Type::SHA1:
-            result = "SHA1";
-            break;
-
-        default:
-            result = "Unknown";
-            break;
-        }
-
-        return result;
+        return hash_func;
     }
 
     std::chrono::system_clock::time_point HashCracker::getTimeStart()
@@ -92,12 +82,12 @@ namespace HonoursProject
     {
         double hash_speed_ms = 0.0;
 
-        for (auto device : devices)
+        for (auto device : attack_tasks)
         {
-            hash_speed_ms += work_dispatch->getSpeedTime(device);
+            hash_speed_ms += device->getAvgSpeedTime();
         }
 
-        hash_speed_ms /= devices.size();
+        hash_speed_ms /= attack_tasks.size();
 
         double eta_time = total_message_count / hash_speed_ms / 1000.0;
 
@@ -116,24 +106,24 @@ namespace HonoursProject
 
     std::size_t HashCracker::getDeviceNum()
     {
-        return devices.size();
+        return attack_tasks.size();
     }
 
     double HashCracker::getDeviceSpeed(std::size_t device_pos)
     {
-        return work_dispatch->getSpeedTime(devices.at(device_pos));
+        return attack_tasks.at(device_pos)->getAvgSpeedTime();
     }
 
     double HashCracker::getDeviceExec(std::size_t device_pos)
     {
-        return work_dispatch->getExecTime(devices.at(device_pos));
+        return attack_tasks.at(device_pos)->getAvgExecTime();
     }
 
-    std::future<std::string> HashCracker::executeAttack(AttackMode attack_mode, const std::string& input, DeviceFilter device_filter)
+    std::future<std::string> HashCracker::executeAttack(const std::vector<std::string>& input, DeviceFilter device_filter)
     {
         cl_int cl_error = CL_SUCCESS;
 
-        std::uint64_t total_batch_size = 0;
+        attack_tasks.clear();
 
         std::vector<cl::Platform> platforms;
         cl::Platform::get(&platforms);
@@ -142,6 +132,8 @@ namespace HonoursProject
         {
             throw std::runtime_error("Error: No platform found!");
         }
+
+        std::vector<std::shared_ptr<Device>> devices;
 
         for (auto& platform : platforms)
         {
@@ -172,71 +164,97 @@ namespace HonoursProject
             throw std::runtime_error("Error: No device found to execute attack!");
         }
 
-        std::vector<std::shared_ptr<SetupTask>> setup_tasks;
+        Logger::info("# Setup Attack\n\n");
 
-        std::vector<std::future<std::shared_ptr<AttackTask>>> setup_futures;
+        std::shared_ptr<SetupTask> setup_task = hash_func->setup_task();
+
+        auto future = std::async(std::launch::async, &SetupTask::run, setup_task.get(), input);
+
+        if (!future.get())
+        {
+            throw std::runtime_error("Error:: Failed to setup attack!");
+        }
+
+        Logger::info("\n");
+
+        std::uint64_t total_batch_size = setup_task->getTotalBatchSize();
+
+        total_message_count = setup_task->getTotalBatchSize() * setup_task->getInnerLoopSize();
+
+        std::vector<std::uint32_t> msg_dgst;
+
+        for (std::size_t digest_pos = 0; digest_pos < 1; digest_pos++)
+        {
+            std::vector<std::uint32_t> result = hash_func->parse(hash_msg);
+
+            std::copy(result.begin(), result.end(), std::back_inserter(msg_dgst));
+        }
+
+        Logger::info("# Kernel Setup\n\n");
+
+        std::vector<std::shared_ptr<KernelTask>> kernel_tasks;
+
+        std::vector<std::future<void>> kernel_futures;
 
         for (auto& device : devices)
         {
-            std::shared_ptr<SetupTask> setup_task;
+            std::shared_ptr<KernelTask> kernel_task = hash_func->kernel_task();
 
-            switch (attack_mode)
-            {
-            case HashCracker::AttackMode::Bruteforce:
-                setup_task = std::make_shared<BruteforceSetupTask>(shared_from_this(), device, hash_msg, hash_func, input);
-                break;
+            kernel_task->transfer(setup_task);
 
-            case HashCracker::AttackMode::Dictionary:
-                throw std::runtime_error("Error: Attack mode not implemented yet!");
-                break;
-            }
+            kernel_tasks.push_back(kernel_task);
 
-            setup_tasks.push_back(setup_task);
+            auto future = std::async(std::launch::async, &KernelTask::run, kernel_task.get(), device, hash_func, msg_dgst);
 
-            auto future = std::async(std::launch::async, &SetupTask::run, setup_task.get());
-
-            setup_futures.push_back(std::move(future));            
+            kernel_futures.push_back(std::move(future));
         }
 
-        std::vector<std::shared_ptr<AttackTask>> attack_tasks;
-
-        while (setup_futures.size() > 0)
+        while (kernel_futures.size() > 0)
         {
-            auto future_iter = std::find_if(setup_futures.begin(), setup_futures.end(),
-                [](const std::future<std::shared_ptr<AttackTask>>& future)
+            auto future_iter = std::find_if(kernel_futures.begin(), kernel_futures.end(),
+                [](const std::future<void>& future)
             {
                 std::future_status status = future.wait_for(std::chrono::nanoseconds(1));
 
                 return (status == std::future_status::ready);
             });
 
-            if (future_iter != setup_futures.end())
+            if (future_iter != kernel_futures.end())
             {
                 try
                 {
-                    attack_tasks.push_back(future_iter->get());
+                    future_iter->get();
+
+                    std::size_t kernel_pos = std::distance(future_iter, kernel_futures.end()) - 1;
+                    std::shared_ptr<KernelTask> kernel_task = kernel_tasks.at(kernel_pos);
+
+                    std::shared_ptr<AttackTask> attack_task = hash_func->attack_task();
+                    attack_task->transfer(setup_task);
+                    attack_task->transfer(kernel_task);
+
+                    attack_tasks.push_back(attack_task);
                 }
                 catch (std::exception& ex)
                 {
-                    Logger::error(ex.what());
+                    Logger::error("Error: Failed to create kernel program! %s", ex.what());
                 }
 
-                future_iter = std::rotate(future_iter, future_iter + 1, setup_futures.end());
+                future_iter = std::rotate(future_iter, future_iter + 1, kernel_futures.end());
             }
 
-            future_iter = setup_futures.erase(future_iter, setup_futures.end());
+            future_iter = kernel_futures.erase(future_iter, kernel_futures.end());
         }
+
+        Logger::info("\n");
 
         if (attack_tasks.size() == 0)
         {
             throw std::runtime_error("Error: No attack was able to create for any device!");
         }
 
-        total_batch_size = setup_tasks.front()->getTotalBatchSize();
+        kernel_tasks.clear();
 
-        total_message_count = setup_tasks.front()->getTotalBatchSize() * setup_tasks.front()->getInnerLoopSize();
-
-        setup_tasks.clear();
+        Logger::info("# Autotune Devices\n\n");
 
         std::vector<std::shared_ptr<AutotuneTask>> autotune_tasks;
 
@@ -244,11 +262,11 @@ namespace HonoursProject
 
         for (auto& attack_task : attack_tasks)
         {
-            std::shared_ptr<AutotuneTask> autotune_task = std::make_shared<AutotuneTask>(attack_task, 12);
+            std::shared_ptr<AutotuneTask> autotune_task = std::make_shared<AutotuneTask>();
 
             autotune_tasks.push_back(autotune_task);
 
-            auto future = std::async(std::launch::async, &AutotuneTask::run, autotune_task.get());
+            auto future = std::async(std::launch::async, &AutotuneTask::run, autotune_task.get(), attack_task, 12);
 
             autotune_futures.push_back(std::move(future));
         }
@@ -258,13 +276,22 @@ namespace HonoursProject
             auto future_iter = std::find_if(autotune_futures.begin(), autotune_futures.end(),
                 [](const std::future<void>& future)
             {
-                std::future_status status = future.wait_for(std::chrono::milliseconds(10));
+                std::future_status status = future.wait_for(std::chrono::nanoseconds(1));
 
                 return (status == std::future_status::ready);
             });
 
             if (future_iter != autotune_futures.end())
             {
+                try
+                {
+                    future_iter->get();
+                }
+                catch (std::exception& ex)
+                {
+                    Logger::error("Error: Failed to create kernel program!", ex.what());
+                }
+
                 future_iter = std::rotate(future_iter, future_iter + 1, autotune_futures.end());
             }
 
@@ -273,10 +300,10 @@ namespace HonoursProject
 
         autotune_tasks.clear();
 
-        work_dispatch = std::make_shared<WorkDispatchTask>(shared_from_this(), attack_tasks, total_batch_size);
+        Logger::info("\n");
 
         start_time = std::chrono::system_clock::now();
 
-        return std::async(std::launch::async, &WorkDispatchTask::run, work_dispatch.get());
+        return std::async(std::launch::async, &WorkDispatchTask::run, work_dispatch.get(), shared_from_this(), attack_tasks, total_batch_size);
     }
 }

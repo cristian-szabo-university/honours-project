@@ -66,11 +66,6 @@ namespace HonoursProject
             cl_uint msg_batch_pos;
             cl_uint inner_loop_pos;
         } message_index_t;
-
-        typedef struct
-        {
-            cl_uint data[4];
-        } message_digest_t;
 #pragma pack(pop)
 
         HASHCRACK_PUBLIC std::string CleanCLString(const std::string& str);

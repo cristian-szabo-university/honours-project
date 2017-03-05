@@ -37,6 +37,8 @@ namespace HonoursProject
 
         bool destroy();
 
+        std::uint32_t getId();
+
         cl::Device getHandle();
 
         cl::Context getContext();
@@ -71,7 +73,11 @@ namespace HonoursProject
 
     private:
 
+        static std::uint32_t next_buffer_id;
+
         bool ready;
+
+        std::uint32_t id;
 
         cl::Device handle;
 

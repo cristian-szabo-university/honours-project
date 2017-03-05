@@ -10,8 +10,11 @@
 
 namespace HonoursProject
 {
+    std::uint32_t Device::next_buffer_id = 0;
+
     Device::Device() : ready(false), used_global_mem_size(0), used_local_mem_size(0)
     {
+        id = next_buffer_id++;
     }
 
     Device::~Device()
@@ -250,6 +253,11 @@ namespace HonoursProject
         ready = !ready;
 
         return true;
+    }
+
+    std::uint32_t Device::getId()
+    {
+        return id;
     }
 
     cl::Device Device::getHandle()

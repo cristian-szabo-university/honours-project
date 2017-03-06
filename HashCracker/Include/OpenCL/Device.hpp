@@ -33,7 +33,7 @@ namespace HonoursProject
 
         ~Device();
 
-        bool create(cl::Platform platform, std::size_t index, cl_context_properties context_props = 0);
+        bool create(cl::Device device, cl_context_properties context_props = 0);
 
         bool destroy();
 

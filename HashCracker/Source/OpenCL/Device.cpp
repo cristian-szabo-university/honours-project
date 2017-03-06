@@ -21,107 +21,49 @@ namespace HonoursProject
     {
     }
 
-    bool Device::create(cl::Platform platform, std::size_t index, cl_context_properties context_props)
+    bool Device::create(cl::Device device, cl_context_properties context_props)
     {
-        cl_int cl_error = CL_SUCCESS;
-
         if (ready)
         {
             return false;
         }
 
-        std::vector<cl::Device> devices;
-        platform.getDevices(CL_DEVICE_TYPE_ALL, &devices);
-
-        if (index >= devices.size())
-        {
-            return false;
-        }
-
-        handle = devices.at(index);
-
-        cl_bool available = handle.getInfo<CL_DEVICE_AVAILABLE>(&cl_error);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: device.getInfo()!\n");
-        }
+        cl_bool available = device.getInfo<CL_DEVICE_AVAILABLE>();
 
         if (available == CL_FALSE)
         {
             return false;
         }
 
-        cl_bool endian_little = handle.getInfo<CL_DEVICE_ENDIAN_LITTLE>(&cl_error);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: device.getInfo()!\n");
-        }
+        cl_bool endian_little = device.getInfo<CL_DEVICE_ENDIAN_LITTLE>();
 
         if (endian_little == CL_FALSE)
         {
             return false;
         }
 
-        cl_bool compiler_available = handle.getInfo<CL_DEVICE_COMPILER_AVAILABLE>(&cl_error);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: device.getInfo()!\n");
-        }
+        cl_bool compiler_available = device.getInfo<CL_DEVICE_COMPILER_AVAILABLE>();
 
         if (compiler_available == CL_FALSE)
         {
             return false;
         }
 
-        cl_device_exec_capabilities execution_capabilities = handle.getInfo<CL_DEVICE_EXECUTION_CAPABILITIES>(&cl_error);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: device.getInfo()!\n");
-        }
+        cl_device_exec_capabilities execution_capabilities = device.getInfo<CL_DEVICE_EXECUTION_CAPABILITIES>();
 
         if ((execution_capabilities & CL_EXEC_KERNEL) == 0)
         {
             return false;
         }
 
-        std::string opencl_version = handle.getInfo<CL_DEVICE_OPENCL_C_VERSION>(&cl_error);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: device.getInfo()!\n");
-        }
+        std::string opencl_version = device.getInfo<CL_DEVICE_OPENCL_C_VERSION>();
 
         if (opencl_version[9] == Platform::OPENCL_COMPILER_MAJOR_VERSION && opencl_version[11] < Platform::OPENCL_COMPILER_MINOR_VERSION)
         {
             return false;
         }
 
-        context = cl::Context(handle, &context_props, nullptr, nullptr, &cl_error);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: kernel::getInfo()\n");
-        }
-
-        std::string device_name = handle.getInfo<CL_DEVICE_NAME>(&cl_error);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: device.getInfo()!\n");
-        }
-
-        this->name = device_name;
-
-        std::string vendor_name = handle.getInfo<CL_DEVICE_VENDOR>(&cl_error);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: device.getInfo()!\n");
-        }
+        std::string vendor_name = device.getInfo<CL_DEVICE_VENDOR>();
 
         if (vendor_name.find("NVIDIA Corporation") != std::string::npos)
         {
@@ -140,12 +82,7 @@ namespace HonoursProject
             this->vendor = Vendor::Invalid;
         }
 
-        cl_device_type type = handle.getInfo<CL_DEVICE_TYPE>(&cl_error);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: device.getInfo()!\n");
-        }
+        cl_device_type type = device.getInfo<CL_DEVICE_TYPE>();
 
         if (type & CL_DEVICE_TYPE_CPU)
         {
@@ -160,49 +97,37 @@ namespace HonoursProject
             this->type = Type::Custom;
         }
 
-        cl_uint max_compute_units = handle.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>(&cl_error);
-
-        if (cl_error != CL_SUCCESS)
+        if (this->vendor == Vendor::Intel && this->type == Type::GPU)
         {
-            throw std::runtime_error("ERROR: device.getInfo()!\n");
+            return false;
         }
+
+        handle = device;
+
+        context = cl::Context(handle, &context_props);
+
+        std::string device_name = handle.getInfo<CL_DEVICE_NAME>();
+
+        this->name = device_name;
+
+        cl_uint max_compute_units = handle.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
 
         this->max_compute_units = max_compute_units;
 
-        cl_ulong max_mem_alloc_size = handle.getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>(&cl_error);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: device.getInfo()!\n");
-        }
+        cl_ulong max_mem_alloc_size = handle.getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>();
 
         // Limit max memory to up to 2GB
         this->max_mem_alloc_size = std::min(max_mem_alloc_size, static_cast<cl_ulong>(0x7fffffff));
 
-        cl_ulong global_mem_size = handle.getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>(&cl_error);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: device.getInfo()\n");
-        }
+        cl_ulong global_mem_size = handle.getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>();
 
         this->total_global_mem_size = global_mem_size;
 
-        cl_ulong local_mem_size = handle.getInfo<CL_DEVICE_LOCAL_MEM_SIZE>(&cl_error);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: device.getInfo()\n");
-        }
+        cl_ulong local_mem_size = handle.getInfo<CL_DEVICE_LOCAL_MEM_SIZE>();
 
         this->total_local_mem_size = local_mem_size;
 
-        std::size_t max_work_group_size = handle.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>(&cl_error);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: device.getInfo()\n");
-        }
+        std::size_t max_work_group_size = handle.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>();
 
         if (this->type == Type::CPU)
         {
@@ -213,28 +138,13 @@ namespace HonoursProject
             this->max_work_group_size = std::min(max_work_group_size, KernelPlatform::MAX_KERNEL_WORK_GROUP);
         }
 
-        cl_ulong max_const_buffer_size = handle.getInfo<CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE>(&cl_error);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: device::getInfo()\n");
-        }
+        cl_ulong max_const_buffer_size = handle.getInfo<CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE>();
 
         this->max_const_buffer_size = max_const_buffer_size;
 
-        cl_uint vector_width = handle.getInfo<CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT>(&cl_error);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: device::getInfo()\n");
-        }
+        cl_uint vector_width = handle.getInfo<CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT>();
 
         this->vector_width = vector_width;
-
-        if (this->vendor == Vendor::Intel && this->type == Type::GPU)
-        {
-            return false;
-        }
 
         ready = !ready;
 
@@ -247,8 +157,6 @@ namespace HonoursProject
         {
             return false;
         }
-
-
 
         ready = !ready;
 
@@ -404,29 +312,17 @@ namespace HonoursProject
 
     std::vector<std::shared_ptr<Device>> Device::Create(cl::Platform platform, cl_device_type device_filter, cl_context_properties context_props)
     {
-        cl_int cl_error = CL_SUCCESS;
-
         std::vector<std::shared_ptr<Device>> result;
 
-        std::vector<cl::Device> devices;
+        std::vector<cl::Device> cl_devices;
 
-        cl_error = platform.getDevices(device_filter, &devices);
+        platform.getDevices(device_filter, &cl_devices);
 
-        if (cl_error == CL_DEVICE_NOT_FOUND)
-        {
-            return result;
-        }
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: platform::getDevices()\n");
-        }
-
-        for (std::size_t device_pos = 0; device_pos < devices.size(); device_pos++)
+        for (auto& cl_device : cl_devices)
         {
             std::shared_ptr<Device> device = std::make_shared<Device>();
 
-            if (!device->create(platform, device_pos, context_props))
+            if (!device->create(cl_device, context_props))
             {
                 continue;
             }

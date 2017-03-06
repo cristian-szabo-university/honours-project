@@ -180,8 +180,6 @@ namespace HonoursProject
 
     bool KernelParam::Copy(std::shared_ptr<KernelParam> src_param, std::shared_ptr<KernelParam> dst_param, std::size_t size, std::size_t src_offset, std::size_t dst_offset)
     {
-        cl_int cl_error = CL_SUCCESS;
-
         std::shared_ptr<KernelBuffer> src_buf = src_param->getKernel()->findBuffer(src_param);
         std::shared_ptr<KernelBuffer> dst_buf = dst_param->getKernel()->findBuffer(dst_param);
 

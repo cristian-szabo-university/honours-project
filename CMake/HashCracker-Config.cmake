@@ -32,6 +32,8 @@
 #   include <unistd.h>
 #endif
 
+#define __CL_ENABLE_EXCEPTIONS
+
 #if defined(__APPLE__)
 #   include <OpenCL/cl.hpp>
 #else

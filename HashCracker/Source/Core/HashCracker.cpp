@@ -121,8 +121,6 @@ namespace HonoursProject
 
     std::future<std::string> HashCracker::executeAttack(const std::vector<std::string>& input, DeviceFilter device_filter)
     {
-        cl_int cl_error = CL_SUCCESS;
-
         attack_tasks.clear();
 
         std::vector<cl::Platform> platforms;

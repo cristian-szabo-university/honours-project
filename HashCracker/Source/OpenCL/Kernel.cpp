@@ -19,58 +19,26 @@ namespace HonoursProject
 
     bool Kernel::create(const std::string& name)
     {
-        cl_int cl_error = CL_SUCCESS;
-
         if (ready)
         {
             return false;
         }
 
-        handle = cl::Kernel(program->getHandle(), name.c_str(), &cl_error);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: cl::Kernel()\n");
-        }
+        handle = cl::Kernel(program->getHandle(), name.c_str());
 
         this->name = name;
 
-        cl_uint param_count = handle.getInfo<CL_KERNEL_NUM_ARGS>(&cl_error);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: kernel::getInfo()\n");
-        }
+        cl_uint param_count = handle.getInfo<CL_KERNEL_NUM_ARGS>();
 
         for (cl_uint param_pos = 0; param_pos < param_count; param_pos++)
         {
-            cl_kernel_arg_address_qualifier param_address_qualifier = handle.getArgInfo<CL_KERNEL_ARG_ADDRESS_QUALIFIER>(param_pos, &cl_error);
+            cl_kernel_arg_address_qualifier param_address_qualifier = handle.getArgInfo<CL_KERNEL_ARG_ADDRESS_QUALIFIER>(param_pos);
 
-            if (cl_error != CL_SUCCESS)
-            {
-                throw std::runtime_error("ERROR: kernel::getArgInfo()\n");
-            }
+            cl_kernel_arg_access_qualifier param_access_qualifier = handle.getArgInfo<CL_KERNEL_ARG_ACCESS_QUALIFIER>(param_pos);
 
-            cl_kernel_arg_access_qualifier param_access_qualifier = handle.getArgInfo<CL_KERNEL_ARG_ACCESS_QUALIFIER>(param_pos, &cl_error);
+            std::string param_type = KernelPlatform::CleanCLString(handle.getArgInfo<CL_KERNEL_ARG_TYPE_NAME>(param_pos));
 
-            if (cl_error != CL_SUCCESS)
-            {
-                throw std::runtime_error("ERROR: kernel::getArgInfo()\n");
-            }
-
-            std::string param_type = KernelPlatform::CleanCLString(handle.getArgInfo<CL_KERNEL_ARG_TYPE_NAME>(param_pos, &cl_error));
-
-            if (cl_error != CL_SUCCESS)
-            {
-                throw std::runtime_error("ERROR: kernel::getArgInfo()\n");
-            }
-
-            std::string param_name = KernelPlatform::CleanCLString(handle.getArgInfo<CL_KERNEL_ARG_NAME>(param_pos, &cl_error));
-
-            if (cl_error != CL_SUCCESS)
-            {
-                throw std::runtime_error("ERROR: kernel::getArgInfo()\n");
-            }
+            std::string param_name = KernelPlatform::CleanCLString(handle.getArgInfo<CL_KERNEL_ARG_NAME>(param_pos));
 
             std::shared_ptr<KernelParam> param = std::make_shared<KernelParam>(shared_from_this()); 
             
@@ -201,8 +169,6 @@ namespace HonoursProject
 
     bool Kernel::updateParam(std::shared_ptr<KernelParam> param, std::size_t size, std::size_t offset)
     {
-        cl_int cl_error = CL_SUCCESS;
-
         std::shared_ptr<KernelBuffer> buffer = findBuffer(param);
 
         if (!buffer->writePending())
@@ -212,12 +178,7 @@ namespace HonoursProject
 
         if (param->getAddressQualifier() == KernelParam::AddressQualifier::Private)
         {
-            cl_error = handle.setArg(param->getIndex(), size * buffer->getElemSize(), buffer->getData(offset));
-
-            if (cl_error != CL_SUCCESS)
-            {
-                throw std::runtime_error("ERROR: command_queue::enqueueCopyBuffer()\n");
-            }
+            handle.setArg(param->getIndex(), size * buffer->getElemSize(), buffer->getData(offset));
         }
         else
         {

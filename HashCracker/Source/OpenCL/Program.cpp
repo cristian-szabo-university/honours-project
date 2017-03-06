@@ -39,19 +39,12 @@ namespace HonoursProject
 
     bool Program::create(cl::Program::Sources sources, std::vector< std::string > build_opts, cl_command_queue_properties cmd_queue_props)
     {
-        cl_int cl_error = CL_SUCCESS;
-
         if (ready)
         {
             return false;
         }
 
-        handle = cl::Program(device->getContext(), sources, &cl_error);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: cl::Program()\n");
-        }
+        handle = cl::Program(device->getContext(), sources);
 
         std::stringstream ss;
         ss << "-cl-kernel-arg-info" << " ";
@@ -62,21 +55,7 @@ namespace HonoursProject
             ss << " " << opt;
         }
 
-        cl_error = handle.build(ss.str().c_str());
-
-        if (cl_error == CL_BUILD_PROGRAM_FAILURE)
-        {
-            std::string build_log = handle.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device->getHandle());
-
-            Logger::error("Error: Failed to build program!\n %s\n", build_log.c_str());
-
-            return false;
-        }
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: cl::CommandQueue()\n");
-        }
+        handle.build(ss.str().c_str());
 
         cl_build_status status = handle.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(device->getHandle());
 
@@ -87,19 +66,9 @@ namespace HonoursProject
 
         this->cmd_queue_props = cmd_queue_props;
 
-        command_queue = cl::CommandQueue(device->getContext(), device->getHandle(), cmd_queue_props, &cl_error);
+        command_queue = cl::CommandQueue(device->getContext(), device->getHandle(), cmd_queue_props);
 
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: cl::CommandQueue()\n");
-        }
-
-        source = handle.getInfo<CL_PROGRAM_SOURCE>(&cl_error);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: Program::getInfo<CL_PROGRAM_SOURCE>()\n");
-        }
+        source = handle.getInfo<CL_PROGRAM_SOURCE>();
 
         for (auto opt : build_opts)
         {
@@ -120,24 +89,13 @@ namespace HonoursProject
         }
 
         std::vector<cl::Kernel> cl_kernels;
-
-        cl_error = handle.createKernels(&cl_kernels);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: program::createKernels()\n");
-        }
+        handle.createKernels(&cl_kernels);
 
         for (cl::Kernel cl_kernel : cl_kernels)
         {
             std::shared_ptr<Kernel> kernel = std::make_shared<Kernel>(shared_from_this());
 
-            std::string name = KernelPlatform::CleanCLString(cl_kernel.getInfo<CL_KERNEL_FUNCTION_NAME>(&cl_error));
-
-            if (cl_error != CL_SUCCESS)
-            {
-                throw std::runtime_error("ERROR: cl::Kernel::getInfo<>()\n");
-            }
+            std::string name = KernelPlatform::CleanCLString(cl_kernel.getInfo<CL_KERNEL_FUNCTION_NAME>());
 
             if (!kernel->create(name))
             {
@@ -277,8 +235,6 @@ namespace HonoursProject
 
     std::shared_ptr<DeviceMemory> Program::createMemory(std::shared_ptr<KernelBuffer> buffer)
     {
-        cl_int cl_error = CL_SUCCESS;
-
         auto iter_buf = buffers.find(buffer);
 
         if (iter_buf != buffers.end())
@@ -298,12 +254,7 @@ namespace HonoursProject
         std::shared_ptr<KernelParam> param = buffer->getParam();
         std::shared_ptr<Kernel> kernel = param->getKernel();
 
-        cl_error = kernel->getHandle().setArg(param->getIndex(), new_mem->getHandle());
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: kernel::setArg()");
-        }
+        kernel->getHandle().setArg(param->getIndex(), new_mem->getHandle());
 
         buffers.insert(std::make_pair(buffer, new_mem));
 
@@ -345,8 +296,6 @@ namespace HonoursProject
 
     bool Program::syncBuffer(std::shared_ptr<KernelBuffer> buffer, std::size_t size, std::size_t offset)
     {
-        cl_int cl_error = CL_SUCCESS;
-
         if (!buffer->readPending())
         {
             return true;
@@ -359,12 +308,7 @@ namespace HonoursProject
             size = buffer->getElemNum() * buffer->getElemSize();
         }
 
-        cl_error = command_queue.enqueueReadBuffer(mem->getHandle(), CL_BLOCKING, offset, size, buffer->getData(offset));
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: command_queue::enqueueReadBuffer()\n");
-        }
+        command_queue.enqueueReadBuffer(mem->getHandle(), CL_BLOCKING, offset, size, buffer->getData(offset));
 
         buffer->setReadFlag(false);
 
@@ -373,8 +317,6 @@ namespace HonoursProject
 
     std::uint64_t Program::executeKernel(std::shared_ptr<Kernel> kernel, std::array<std::size_t, 3> global_size, std::array<std::size_t, 3> local_size, std::array<std::size_t, 3> offset_size)
     {
-        cl_int cl_error = CL_SUCCESS;
-
         for (std::size_t i = 0; i < 3; i++)
         {
             while (global_size[i] % local_size[i]) global_size[i]++;
@@ -382,67 +324,35 @@ namespace HonoursProject
 
         cl::Event event;
 
-        cl_error = command_queue.enqueueNDRangeKernel(
+        command_queue.enqueueNDRangeKernel(
             kernel->getHandle(),
             cl::NDRange(offset_size[0], offset_size[1], offset_size[2]),
             cl::NDRange(global_size[0], global_size[1], global_size[2]),
             cl::NDRange(local_size[0], local_size[1], local_size[2]),
             NULL, &event);
 
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: command_queue.enqueueNDRangeKernel()\n");
-        }
+        command_queue.flush();
 
-        cl_error = command_queue.flush();
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: command_queue.flush()\n");
-        }
-
-        cl_error = event.wait();
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: event.wait()\n");
-        }
+        event.wait();
         
         std::uint64_t exec_time = 0;
 
         if (cmd_queue_props & CL_QUEUE_PROFILING_ENABLE)
         {
-            std::int64_t start_time = event.getProfilingInfo<CL_PROFILING_COMMAND_START>(&cl_error);
+            std::int64_t start_time = event.getProfilingInfo<CL_PROFILING_COMMAND_START>();
 
-            if (cl_error != CL_SUCCESS)
-            {
-                throw std::runtime_error("ERROR: command_queue.finish()\n");
-            }
-
-            std::int64_t end_time = event.getProfilingInfo<CL_PROFILING_COMMAND_END>(&cl_error);
-
-            if (cl_error != CL_SUCCESS)
-            {
-                throw std::runtime_error("ERROR: command_queue.finish()\n");
-            }
+            std::int64_t end_time = event.getProfilingInfo<CL_PROFILING_COMMAND_END>();
 
             exec_time = end_time - start_time;
         }
 
-        cl_error = command_queue.finish();
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: command_queue.finish()\n");
-        }
+        command_queue.finish();
 
         return exec_time;
     }
 
     bool Program::updateBuffer(std::shared_ptr<KernelBuffer> buffer, std::size_t size, std::size_t offset)
     {
-        cl_int cl_error = CL_SUCCESS;
-
         std::shared_ptr<DeviceMemory> mem = findMemory(buffer);
 
         if (!mem->isReady())
@@ -455,12 +365,7 @@ namespace HonoursProject
             return false;
         }
 
-        cl_error = command_queue.enqueueWriteBuffer(mem->getHandle(), CL_BLOCKING, offset, size, buffer->getData(offset));
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: command_queue::enqueueWriteBuffer()\n");
-        }
+        command_queue.enqueueWriteBuffer(mem->getHandle(), CL_BLOCKING, offset, size, buffer->getData(offset));
 
         return true;
     }

@@ -24,8 +24,6 @@ namespace HonoursProject
 
     bool DeviceMemory::create(std::size_t size, AddressFlag flag)
     {
-        cl_int cl_error = CL_SUCCESS;
-
         if (ready)
         {
             return false;
@@ -50,12 +48,7 @@ namespace HonoursProject
 
         std::shared_ptr<Device> device = param->getKernel()->getProgram()->getDevice();
 
-        handle = cl::Buffer(device->getContext(), mem_flag, size, nullptr, &cl_error);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: cl::Buffer()\n");
-        };
+        handle = cl::Buffer(device->getContext(), mem_flag, size);
 
         this->size = size;
 
@@ -127,8 +120,6 @@ namespace HonoursProject
 
     bool DeviceMemory::Copy(std::shared_ptr<DeviceMemory> src_mem, std::shared_ptr<DeviceMemory> dst_mem, std::size_t size, std::size_t src_offset, std::size_t dst_offset)
     {
-        cl_int cl_error = CL_SUCCESS;
-      
         if (!size ||
             size + dst_offset > dst_mem->getSize() ||
             size + src_offset > src_mem->getSize())
@@ -138,15 +129,10 @@ namespace HonoursProject
 
         std::shared_ptr<Program> dst_prog = dst_mem->getParam()->getKernel()->getProgram();
 
-        cl_error = dst_prog->getCommandQueue().enqueueCopyBuffer(
+        dst_prog->getCommandQueue().enqueueCopyBuffer(
             src_mem->getHandle(),
             dst_mem->getHandle(),
             src_offset, dst_offset, size);
-
-        if (cl_error != CL_SUCCESS)
-        {
-            throw std::runtime_error("ERROR: command_queue::enqueueCopyBuffer()\n");
-        }
 
         return true;
     }

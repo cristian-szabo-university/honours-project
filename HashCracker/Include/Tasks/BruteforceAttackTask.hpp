@@ -6,7 +6,7 @@ namespace HonoursProject
 {
     class Charset;
 
-    class HASHCRACK_PUBLIC BruteforceAttackTask : public AttackTask
+    class HASH_CRACKER_PUBLIC BruteforceAttackTask : public AttackTask
     {
     public:
 

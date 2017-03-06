@@ -1,0 +1,6 @@
+@PACKAGE_INIT@
+
+include ("${CMAKE_CURRENT_LIST_DIR}/@CMAKE_PROJECT_NAME@-Targets.cmake")
+
+include (ExternalProjects/Docopt)
+include (ExternalProjects/OpenCL)

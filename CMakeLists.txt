@@ -1,11 +1,12 @@
 cmake_minimum_required (VERSION 3.6)
 
+include (GNUInstallDirs)
 include (ExternalProject)
 include (CMakePackageConfigHelpers)
 
 ###############################################################################
 #
-#   MAIN
+#   CONFIGURE
 #
 ###############################################################################
 
@@ -15,7 +16,6 @@ if (${PROJECT_SOURCE_DIR} STREQUAL ${PROJECT_BINARY_DIR})
 	message(FATAL_ERROR "In-tree builds are not supported; please run cmake in a separate build directory.")
 endif ()
 
-list (APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake/Modules")
 list (APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
 
 set (CMAKE_CXX_STANDARD 11)
@@ -26,115 +26,27 @@ set (CONFIG_FILE "${CMAKE_PROJECT_NAME}-Config.cmake")
 set (VERSION_FILE "${CMAKE_PROJECT_NAME}-Config-Version.cmake")
 set (TARGET_FILE "${CMAKE_PROJECT_NAME}-Targets.cmake")
 
-set (INCLUDE_INSTALL_DIR "Include")
-set (LIBRARY_INSTALL_DIR "Library")
-set (BINARY_INSTALL_DIR "Binary")
-set (CONFIG_INSTALL_DIR "CMake")
+set (INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_PROJECT_NAME}")
+set (LIBRARY_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/${CMAKE_PROJECT_NAME}")
+set (BINARY_INSTALL_DIR "${CMAKE_INSTALL_BINDIR}")
+set (CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/${CMAKE_PROJECT_NAME}/CMake")
 
 ###############################################################################
 #
-#   EXTERN PROJECTS
+#   EXTERNAL PROJECTS
 #
 ###############################################################################
 
-set (EXTERN_BASE_DIR "${CMAKE_BINARY_DIR}/Extern")
-set (EXTERN_DOWNLOAD_DIR "${EXTERN_BASE_DIR}/Download")
-set (EXTERN_INSTALL_DIR "${EXTERN_BASE_DIR}/Install")
-set (EXTERN_SOURCE_DIR "${EXTERN_BASE_DIR}/Source")
-set (EXTERN_BINARY_DIR "${EXTERN_BASE_DIR}/Build")
+set (EXTERN_BASE_DIR "${CMAKE_BINARY_DIR}/ExternalProjects")
 
 set_directory_properties (PROPERTIES EP_BASE ${EXTERN_BASE_DIR})
 
-ExternalProject_Add (
-    Docopt
-
-    GIT_REPOSITORY "https://github.com/docopt/docopt.cpp.git"
-    GIT_TAG "master"
-    
-    CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>")
-
-ExternalProject_Get_Property (Docopt SOURCE_DIR)
-ExternalProject_Get_Property (Docopt BINARY_DIR)
-ExternalProject_Get_Property (Docopt INSTALL_DIR)
-
-file(MAKE_DIRECTORY "${INSTALL_DIR}/include/docopt")
-
-add_library (docopt SHARED IMPORTED)
-
-set_property (TARGET docopt PROPERTY CXX_STANDARD 11)
-
-set_target_properties (docopt PROPERTIES
-	IMPORTED_LOCATION "${INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}docopt${CMAKE_SHARED_LIBRARY_SUFFIX}"
-    IMPORTED_IMPLIB "${INSTALL_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}docopt${CMAKE_STATIC_LIBRARY_SUFFIX}"
-    INTERFACE_INCLUDE_DIRECTORIES "${INSTALL_DIR}/include/docopt")
-
-ExternalProject_Add (
-    OpenCL-Headers
-
-    GIT_REPOSITORY "https://github.com/KhronosGroup/OpenCL-Headers"
-    GIT_TAG "opencl21"
-    
-    CONFIGURE_COMMAND "" 
-    UPDATE_COMMAND ""
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
-)
-
-ExternalProject_Add (
-    OpenCL-CPP-Header
-    
-    URL "https://www.khronos.org/registry/cl/api/2.1/cl.hpp"
-    DOWNLOAD_NO_EXTRACT 0
-    
-    CONFIGURE_COMMAND "" 
-    UPDATE_COMMAND ""
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
-)
-
-ExternalProject_Add (
-    OpenCL-ICD-Loader
-
-    DEPENDS OpenCL-Headers OpenCL-CPP-Header
-    
-    GIT_REPOSITORY "https://github.com/KhronosGroup/OpenCL-ICD-Loader"
-    GIT_TAG "master"
-    
-    INSTALL_COMMAND ""
-    UPDATE_COMMAND ""
-)
-
-ExternalProject_Add_Step (OpenCL-ICD-Loader copy_opencl_header_files
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl.h"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/opencl.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/opencl.h"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl_platform.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl_platform.h" 
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl_ext.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl_ext.h"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl_gl.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl_gl.h"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl_gl_ext.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl_gl_ext.h"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl_egl.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl_egl.h"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl_d3d10.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl_d3d10.h"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl_d3d11.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl_d3d11.h"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl_dx9_media_sharing.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl_dx9_media_sharing.h"
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_DOWNLOAD_DIR}/OpenCL-CPP-Header/cl.hpp" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl.hpp"
-	DEPENDEES update
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-	LOG 1
-) 
-
-ExternalProject_Get_Property (OpenCL-ICD-Loader SOURCE_DIR)
-ExternalProject_Get_Property (OpenCL-ICD-Loader BINARY_DIR)
-
-file(MAKE_DIRECTORY "${SOURCE_DIR}/inc")
-
-add_library (OpenCL SHARED IMPORTED)
-set_target_properties (OpenCL PROPERTIES
-	IMPORTED_LOCATION "${BINARY_DIR}/bin/${CMAKE_SHARED_LIBRARY_PREFIX}OpenCL${CMAKE_SHARED_LIBRARY_SUFFIX}"
-    IMPORTED_IMPLIB "${BINARY_DIR}/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}OpenCL${CMAKE_STATIC_LIBRARY_SUFFIX}"
-    INTERFACE_INCLUDE_DIRECTORIES "${SOURCE_DIR}/inc")
+include (ExternalProjects/Docopt)
+include (ExternalProjects/OpenCL)
 
 ###############################################################################
 #
-#   INTERN PROJECTS
+#   INTERNAL PROJECTS
 #
 ###############################################################################
 
@@ -148,7 +60,7 @@ add_subdirectory ("${CMAKE_SOURCE_DIR}/PasswordRecovery")
 ###############################################################################
 
 configure_package_config_file (
-	"${CMAKE_SOURCE_DIR}/ProjectConfig.cmake.inc" ${CONFIG_FILE}
+	"${CMAKE_SOURCE_DIR}/CMake/${CMAKE_PROJECT_NAME}-Config.cmake" ${CONFIG_FILE}
 	INSTALL_DESTINATION ${CONFIG_INSTALL_DIR}
 	PATH_VARS INCLUDE_INSTALL_DIR LIBRARY_INSTALL_DIR BINARY_INSTALL_DIR)
 
@@ -157,25 +69,19 @@ write_basic_package_version_file (
 	VERSION ${PROJECT_VERSION}
 	COMPATIBILITY SameMajorVersion)
 
-install (FILES "${CMAKE_BINARY_DIR}/${CONFIG_FILE}" 
-	"${CMAKE_BINARY_DIR}/${VERSION_FILE}"
-    "${CMAKE_BINARY_DIR}/CMakeFiles/Export/CMake/${TARGET_FILE}"
-    "${CMAKE_BINARY_DIR}/CMakeFiles/Export/CMake/${CMAKE_PROJECT_NAME}-Targets-$<$<CONFIG:Debug>:debug>$<$<CONFIG:Release>:release>.cmake"
-    DESTINATION ${CONFIG_INSTALL_DIR}
-    COMPONENT Libraries)
+install (FILES "${CMAKE_BINARY_DIR}/${CONFIG_FILE}" "${CMAKE_BINARY_DIR}/${VERSION_FILE}"
+    DESTINATION ${CONFIG_INSTALL_DIR} COMPONENT Libraries)
     
-install (FILES "$<TARGET_FILE_DIR:docopt>/$<TARGET_FILE_NAME:docopt>"
-    DESTINATION ${BINARY_INSTALL_DIR}
-    COMPONENT Binaries)
+install (DIRECTORY "${CMAKE_SOURCE_DIR}/CMake/ExternalProjects"
+    DESTINATION ${CONFIG_INSTALL_DIR} COMPONENT Libraries)
 
 install (EXPORT ${TARGET_NAME}
-	FILE ${TARGET_FILE}
 	NAMESPACE "${CMAKE_PROJECT_NAME}::"
 	DESTINATION ${CONFIG_INSTALL_DIR})
 
 ###############################################################################
 #
-#   CPACK
+#   PACKAGE
 #
 ###############################################################################
 
@@ -200,8 +106,7 @@ set (CPACK_COMPONENT_BINARIES_INSTALL_TYPES Applications Developer Full)
 set (CPACK_COMPONENT_LIBRARIES_INSTALL_TYPES Developer Full)
 set (CPACK_COMPONENT_HEADERS_INSTALL_TYPES Developer Full)
 set (CPACK_COMPONENT_APPLICATIONS_INSTALL_TYPES Applications Full)
- 
-set (CPACK_PACKAGE_DIRECTORY "${PROJECT_SOURCE_DIR}/Package")
+
 set (CPACK_STRIP_FILES TRUE)
 
 include (CPack)

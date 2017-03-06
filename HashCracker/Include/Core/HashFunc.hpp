@@ -49,7 +49,7 @@ namespace HonoursProject
         std::uint32_t b1, 
         std::uint32_t b2
     >
-    class HASHCRACK_PUBLIC THashFunc : public HashFunc
+    class HASH_CRACKER_PUBLIC THashFunc : public HashFunc
     {
     public:
 
@@ -116,7 +116,7 @@ namespace HonoursProject
 
     // class Dictionary_HashProcess : public HashProcess<DictionarySetupTask, DictionaryKernelTask, DictionaryAttackTask> {};
 
-    class HASHCRACK_PUBLIC MD5_Parse
+    class HASH_CRACKER_PUBLIC MD5_Parse
     {
     public:
 
@@ -125,7 +125,7 @@ namespace HonoursProject
     };
 
     /*
-    class HASHCRACK_PUBLIC SHA1_Parse
+    class HASH_CRACKER_PUBLIC SHA1_Parse
     {
     public:
 
@@ -135,7 +135,7 @@ namespace HonoursProject
     */
     
     template<class Task>
-    class HASHCRACK_PUBLIC MD5_HashFunc : public THashFunc<Task, MD5_Parse, 0x80808080, 1, 0>
+    class HASH_CRACKER_PUBLIC MD5_HashFunc : public THashFunc<Task, MD5_Parse, 0x80808080, 1, 0>
     {
     public:
 
@@ -171,7 +171,7 @@ namespace HonoursProject
 
     /*
     template<class Task>
-    class HASHCRACK_PUBLIC SHA1_HashFunc : public THashFunc<Task, SHA1_Parse, 0x80808080, 0, 1>
+    class HASH_CRACKER_PUBLIC SHA1_HashFunc : public THashFunc<Task, SHA1_Parse, 0x80808080, 0, 1>
     {
     public:
 

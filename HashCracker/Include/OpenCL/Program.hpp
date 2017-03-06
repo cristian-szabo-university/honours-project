@@ -9,12 +9,12 @@ namespace HonoursProject
     class Kernel;
     class KernelBuffer;
 
-    struct HASHCRACK_PUBLIC CompareKernelBuffer
+    struct HASH_CRACKER_PUBLIC CompareKernelBuffer
     {
         bool operator()(const std::shared_ptr<KernelBuffer>& a, const std::shared_ptr<KernelBuffer>& b) const;
     };
 
-    class HASHCRACK_PUBLIC Program : public std::enable_shared_from_this<Program>
+    class HASH_CRACKER_PUBLIC Program : public std::enable_shared_from_this<Program>
     {
     public:
 

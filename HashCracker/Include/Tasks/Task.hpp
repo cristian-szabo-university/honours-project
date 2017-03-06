@@ -2,7 +2,7 @@
 
 namespace HonoursProject
 {
-    class HASHCRACK_PUBLIC BaseTask
+    class HASH_CRACKER_PUBLIC BaseTask
     {
     public:
 
@@ -25,7 +25,7 @@ namespace HonoursProject
 
     };
 
-    class HASHCRACK_PUBLIC NoReturnTask : public TTask<void>
+    class HASH_CRACKER_PUBLIC NoReturnTask : public TTask<void>
     {
     public:
 
@@ -33,7 +33,7 @@ namespace HonoursProject
 
     };
 
-    class HASHCRACK_PUBLIC Task : public TTask<std::int32_t>
+    class HASH_CRACKER_PUBLIC Task : public TTask<std::int32_t>
     {
     public:
 

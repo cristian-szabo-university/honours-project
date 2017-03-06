@@ -12,7 +12,7 @@ namespace HonoursProject
     class HashFunc;
     class Kernel;
 
-    class HASHCRACK_PUBLIC BruteforceKernelTask : public KernelTask
+    class HASH_CRACKER_PUBLIC BruteforceKernelTask : public KernelTask
     {
     public:
 

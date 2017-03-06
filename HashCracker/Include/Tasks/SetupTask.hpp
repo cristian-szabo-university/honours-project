@@ -7,7 +7,7 @@ namespace HonoursProject
     class HashFunc;
     class Kernel;
 
-    class HASHCRACK_PUBLIC SetupTask : public TTask<bool, std::vector<std::string>>
+    class HASH_CRACKER_PUBLIC SetupTask : public TTask<bool, std::vector<std::string>>
     {
     public:
 

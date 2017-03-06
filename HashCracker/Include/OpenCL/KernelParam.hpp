@@ -5,7 +5,7 @@ namespace HonoursProject
     class KernelBuffer;
     class Kernel;
 
-    class HASHCRACK_PUBLIC KernelParam : public std::enable_shared_from_this<KernelParam>
+    class HASH_CRACKER_PUBLIC KernelParam : public std::enable_shared_from_this<KernelParam>
     {
     public:
 

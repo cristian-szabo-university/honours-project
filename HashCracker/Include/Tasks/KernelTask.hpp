@@ -11,7 +11,7 @@ namespace HonoursProject
     class SetupTask;
     class HashFunc;
 
-    class HASHCRACK_PUBLIC KernelTask : public TTask<void, std::shared_ptr<Device>, std::shared_ptr<HashFunc>, std::vector<std::uint32_t>>
+    class HASH_CRACKER_PUBLIC KernelTask : public TTask<void, std::shared_ptr<Device>, std::shared_ptr<HashFunc>, std::vector<std::uint32_t>>
     {
     public:
 

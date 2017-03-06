@@ -2,7 +2,7 @@
 
 namespace HonoursProject
 {
-    class HASHCRACK_PUBLIC Logger
+    class HASH_CRACKER_PUBLIC Logger
     {
     public:
 

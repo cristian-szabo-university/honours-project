@@ -4,7 +4,7 @@ namespace HonoursProject
 {
     class KernelParam;
 
-    class HASHCRACK_PUBLIC DeviceMemory : public std::enable_shared_from_this<DeviceMemory>
+    class HASH_CRACKER_PUBLIC DeviceMemory : public std::enable_shared_from_this<DeviceMemory>
     {
     public:
 

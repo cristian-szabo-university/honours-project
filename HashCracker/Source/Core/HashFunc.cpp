@@ -13,10 +13,10 @@ namespace HonoursProject
     // template class MD5_HashFunc<Dictionary_HashTask>;
 
     template<class Task>
-    const HASHCRACK_PUBLIC std::string MD5_HashFunc<Task>::name = "MD5";
+    const HASH_CRACKER_PUBLIC std::string MD5_HashFunc<Task>::name = "MD5";
 
     template<>
-    const HASHCRACK_PUBLIC ProgramEntry& MD5_HashFunc<Bruteforce_HashProcess>::program = bruteforce_md5;
+    const HASH_CRACKER_PUBLIC ProgramEntry& MD5_HashFunc<Bruteforce_HashProcess>::program = bruteforce_md5;
 
     // const ProgramEntry& MD5_HashFunc<Dictionary_HashTask>::program = dictionary_md5;
 

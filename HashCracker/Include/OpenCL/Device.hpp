@@ -6,7 +6,7 @@ namespace HonoursProject
     class KernelBuffer;
     class DeviceMemory;
 
-    class HASHCRACK_PUBLIC Device : public std::enable_shared_from_this<Device>
+    class HASH_CRACKER_PUBLIC Device : public std::enable_shared_from_this<Device>
     {
     public:
 

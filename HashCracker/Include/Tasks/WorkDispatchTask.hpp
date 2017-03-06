@@ -8,7 +8,7 @@ namespace HonoursProject
     class HashCracker;
     class Device;
 
-    class HASHCRACK_PUBLIC WorkDispatchTask : public TTask<std::string, std::shared_ptr<HashCracker>, std::vector<std::shared_ptr<AttackTask>>, std::uint64_t>
+    class HASH_CRACKER_PUBLIC WorkDispatchTask : public TTask<std::string, std::shared_ptr<HashCracker>, std::vector<std::shared_ptr<AttackTask>>, std::uint64_t>
     {
     public:
 

@@ -9,12 +9,12 @@
 
 namespace HonoursProject
 {
-    struct HASHCRACK_PUBLIC CompareKernelParam 
+    struct HASH_CRACKER_PUBLIC CompareKernelParam 
     {
         bool operator()(const std::shared_ptr<KernelParam>& a, const std::shared_ptr<KernelParam>& b) const;
     };
 
-    class HASHCRACK_PUBLIC Kernel : public std::enable_shared_from_this<Kernel>
+    class HASH_CRACKER_PUBLIC Kernel : public std::enable_shared_from_this<Kernel>
     {
     public:
 

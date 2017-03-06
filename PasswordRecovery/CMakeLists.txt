@@ -1,4 +1,4 @@
-project (PasswordRecovery VERSION 1.0.0)
+project (PasswordRecovery)
 
 include_directories (
 	${CMAKE_CURRENT_SOURCE_DIR}/Include)
@@ -16,8 +16,6 @@ set (HASHAPP_SOURCE_FILES
 add_executable (${PROJECT_NAME} ${HASHAPP_HEADER_FILES} ${HASHAPP_SOURCE_FILES})
 
 target_link_libraries (${PROJECT_NAME} PUBLIC docopt HashCracker)
-
-add_dependencies (${PROJECT_NAME} Docopt)
 
 add_custom_command (TARGET ${PROJECT_NAME} 
     POST_BUILD 

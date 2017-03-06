@@ -11,7 +11,7 @@ namespace HonoursProject
     class Device;
     class KernelTask;
 
-    class HASHCRACK_PUBLIC AttackTask : public TTask<std::string, std::shared_ptr<HashCracker>>
+    class HASH_CRACKER_PUBLIC AttackTask : public TTask<std::string, std::shared_ptr<HashCracker>>
     {
     public:
 

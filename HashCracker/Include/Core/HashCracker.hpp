@@ -9,7 +9,7 @@ namespace HonoursProject
     class HashFunc;
     class AttackTask;
 
-    class HASHCRACK_PUBLIC HashCracker : public std::enable_shared_from_this<HashCracker>
+    class HASH_CRACKER_PUBLIC HashCracker : public std::enable_shared_from_this<HashCracker>
     {
     public:
 

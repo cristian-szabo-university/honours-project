@@ -2,7 +2,7 @@
 
 namespace HonoursProject
 {
-    class HASHCRACK_PUBLIC Charset
+    class HASH_CRACKER_PUBLIC Charset
     {
     public:
 

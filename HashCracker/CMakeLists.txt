@@ -1,4 +1,4 @@
-project (HashCracker VERSION 1.0.0)
+project (HashCracker)
 
 include (GenerateExportHeader)
 
@@ -8,10 +8,10 @@ find_package (Threads REQUIRED)
 
 add_custom_command (
     OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/Source/ProgramEntry.cpp" "${CMAKE_CURRENT_BINARY_DIR}/Include/ProgramEntry.hpp"
-    COMMAND ${CMAKE_COMMAND} "-DCL_DIR=${CMAKE_CURRENT_SOURCE_DIR}/OpenCL" "-DFILE_OUT=ProgramEntry.cpp" "-DDIR_OUT=${CMAKE_CURRENT_BINARY_DIR}" -P "${CMAKE_SOURCE_DIR}/CMake/cl2cpp.cmake")
+    COMMAND ${CMAKE_COMMAND} "-DCL_DIR=${CMAKE_CURRENT_SOURCE_DIR}/OpenCL" "-DFILE_OUT=ProgramEntry.cpp" "-DDIR_OUT=${CMAKE_CURRENT_BINARY_DIR}" -P "${CMAKE_SOURCE_DIR}/CMake/File2Code.cmake")
     
-configure_file (	
-	${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.inc 
+configure_file (
+	"${CMAKE_SOURCE_DIR}/CMake/${PROJECT_NAME}-Config.cmake"
 	${CMAKE_CURRENT_BINARY_DIR}/Include/Config.hpp @ONLY)
 
 set (BASE_HEADER_FILES
@@ -46,7 +46,7 @@ set (TASKS_HEADER_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Include/Tasks/BruteforceKernelTask.hpp    
     ${CMAKE_CURRENT_SOURCE_DIR}/Include/Tasks/WorkDispatchTask.hpp)
 
-set (HASHCRACK_HEADER_FILES
+set (HASH_CRACKER_HEADER_FILES
 	${BASE_HEADER_FILES}
     ${CORE_HEADER_FILES}
     ${OPENCL_HEADER_FILES}
@@ -86,7 +86,7 @@ set (TASKS_SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/Source/Tasks/BruteforceKernelTask.cpp    
     ${CMAKE_CURRENT_SOURCE_DIR}/Source/Tasks/WorkDispatchTask.cpp)
 
-set (HASHCRACK_SOURCE_FILES
+set (HASH_CRACKER_SOURCE_FILES
 	${BASE_SOURCE_FILES}
     ${CORE_SOURCE_FILES}
     ${OPENCL_SOURCE_FILES}
@@ -97,7 +97,7 @@ source_group ("Source\\Core" FILES ${CORE_SOURCE_FILES})
 source_group ("Source\\OpenCL" FILES ${OPENCL_SOURCE_FILES})
 source_group ("Source\\Tasks" FILES ${TASKS_SOURCE_FILES})
 
-add_library (${PROJECT_NAME} SHARED ${HASHCRACK_HEADER_FILES} ${HASHCRACK_SOURCE_FILES})
+add_library (${PROJECT_NAME} SHARED ${HASH_CRACKER_HEADER_FILES} ${HASH_CRACKER_SOURCE_FILES})
 
 add_dependencies (${PROJECT_NAME} OpenCL-ICD-Loader)
 
@@ -108,17 +108,19 @@ target_include_directories (${PROJECT_NAME} PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/Include>)
 
 generate_export_header(${PROJECT_NAME}
-	EXPORT_MACRO_NAME "HASHCRACK_PUBLIC"
+	EXPORT_MACRO_NAME "HASH_CRACKER_PUBLIC"
 	EXPORT_FILE_NAME "Include/Export.hpp")
-
-install (DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Include/"
-    DESTINATION "${INCLUDE_INSTALL_DIR}" COMPONENT Headers)
-
-install (DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Include/"
-    DESTINATION "${INCLUDE_INSTALL_DIR}" COMPONENT Headers)
+    
+install (DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Include"
+    DESTINATION "${INCLUDE_INSTALL_DIR}" 
+    COMPONENT Headers)
+    
+install (DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Include"
+    DESTINATION "${INCLUDE_INSTALL_DIR}" 
+    COMPONENT Headers)
 
 install (TARGETS ${PROJECT_NAME}
 	EXPORT ${TARGET_NAME}
-	ARCHIVE DESTINATION "${LIBRARY_INSTALL_DIR}"  COMPONENT Libraries
+	ARCHIVE DESTINATION "${LIBRARY_INSTALL_DIR}" COMPONENT Libraries
 	LIBRARY DESTINATION "${LIBRARY_INSTALL_DIR}" COMPONENT Libraries
 	RUNTIME DESTINATION "${BINARY_INSTALL_DIR}" COMPONENT Binaries)

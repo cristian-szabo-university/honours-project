@@ -23,7 +23,7 @@ namespace HonoursProject
 
         const std::size_t AUTOTUNE_VALIDATE_CHECKS = 1;
 
-        HASHCRACK_PUBLIC std::uint32_t to_int32(const std::uint8_t * bytes);
+        HASH_CRACKER_PUBLIC std::uint32_t to_int32(const std::uint8_t * bytes);
     };
 
     namespace KernelPlatform
@@ -68,6 +68,6 @@ namespace HonoursProject
         } message_index_t;
 #pragma pack(pop)
 
-        HASHCRACK_PUBLIC std::string CleanCLString(const std::string& str);
+        HASH_CRACKER_PUBLIC std::string CleanCLString(const std::string& str);
     };
 }

@@ -99,8 +99,6 @@ source_group ("Source\\Tasks" FILES ${TASKS_SOURCE_FILES})
 
 add_library (${PROJECT_NAME} SHARED ${HASH_CRACKER_HEADER_FILES} ${HASH_CRACKER_SOURCE_FILES})
 
-add_dependencies (${PROJECT_NAME} OpenCL-ICD-Loader)
-
 target_link_libraries (${PROJECT_NAME} PUBLIC OpenCL Threads::Threads)
 
 target_include_directories (${PROJECT_NAME} PUBLIC  
@@ -111,11 +109,11 @@ generate_export_header(${PROJECT_NAME}
 	EXPORT_MACRO_NAME "HASH_CRACKER_PUBLIC"
 	EXPORT_FILE_NAME "Include/Export.hpp")
     
-install (DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Include"
+install (DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Include/"
     DESTINATION "${INCLUDE_INSTALL_DIR}" 
     COMPONENT Headers)
     
-install (DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Include"
+install (DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Include/"
     DESTINATION "${INCLUDE_INSTALL_DIR}" 
     COMPONENT Headers)
 

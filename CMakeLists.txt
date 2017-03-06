@@ -1,5 +1,8 @@
 cmake_minimum_required (VERSION 3.6)
 
+include (ExternalProject)
+include (CMakePackageConfigHelpers)
+
 ###############################################################################
 #
 #   MAIN
@@ -8,12 +11,6 @@ cmake_minimum_required (VERSION 3.6)
 
 project (HonoursProject VERSION 1.0.0)
 
-include (ExternalProject)
-
-if (EXTERN_VERSION)
-    set (PROJECT_VERSION ${EXTERN_VERSION})
-endif ()
-
 if (${PROJECT_SOURCE_DIR} STREQUAL ${PROJECT_BINARY_DIR})
 	message(FATAL_ERROR "In-tree builds are not supported; please run cmake in a separate build directory.")
 endif ()
@@ -21,6 +18,7 @@ endif ()
 list (APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake/Modules")
 list (APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
 
+set (CMAKE_CXX_STANDARD 11)
 set (CMAKE_DEBUG_POSTFIX "_Debug")
 
 set (TARGET_NAME "${CMAKE_PROJECT_NAME}Targets")
@@ -148,7 +146,6 @@ add_subdirectory ("${CMAKE_SOURCE_DIR}/PasswordRecovery")
 #   INSTALL
 #
 ###############################################################################
-include (CMakePackageConfigHelpers)
 
 configure_package_config_file (
 	"${CMAKE_SOURCE_DIR}/ProjectConfig.cmake.inc" ${CONFIG_FILE}

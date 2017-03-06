@@ -74,7 +74,7 @@ deploy:
     secure: ${GITHUB_AUTH}
   file_glob: true
   file:
-    - ${TRAVIS_BUILD_DIR}/Package/*.sh
+    - ${TRAVIS_BUILD_DIR}/Package/*.deb
   skip_cleanup: true
   on:
     tags: true

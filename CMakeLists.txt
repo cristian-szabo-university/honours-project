@@ -37,6 +37,12 @@ set (CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/${CMAKE_PROJECT_NAME}/CMake")
 #
 ###############################################################################
 
+if (WIN32)
+    set (DEST_INSTALL_DIR ${BINARY_INSTALL_DIR})
+else ()
+    set (DEST_INSTALL_DIR ${LIBRARY_INSTALL_DIR})
+endif ()
+
 set (EXTERN_BASE_DIR "${CMAKE_BINARY_DIR}/ExternalProjects")
 
 set_directory_properties (PROPERTIES EP_BASE ${EXTERN_BASE_DIR})

@@ -12,14 +12,12 @@ include (CMakePackageConfigHelpers)
 
 project (HonoursProject VERSION 1.0.0)
 
-if (${PROJECT_SOURCE_DIR} STREQUAL ${PROJECT_BINARY_DIR})
-	message(FATAL_ERROR "In-tree builds are not supported; please run cmake in a separate build directory.")
-endif ()
-
 list (APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
 
 set (CMAKE_CXX_STANDARD 11)
 set (CMAKE_DEBUG_POSTFIX "_Debug")
+set (CMAKE_DISABLE_IN_SOURCE_BUILD ON)
+set (CMAKE_DISABLE_SOURCE_CHANGES ON)
 
 set (EXPORT_NAME "${CMAKE_PROJECT_NAME}Targets")
 set (CONFIG_FILE "${CMAKE_PROJECT_NAME}Config.cmake")

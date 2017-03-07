@@ -1,28 +1,17 @@
 project (PasswordRecovery)
 
-include_directories (
-	${CMAKE_CURRENT_SOURCE_DIR}/Include)
+file (GLOB HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Include/*.hpp")
+file (GLOB SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Source/*.cpp")
 
-set (HASHAPP_HEADER_FILES
-	${CMAKE_CURRENT_SOURCE_DIR}/Include/Main.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Include/Program.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Include/ConsoleInput.hpp)
-	
-set (HASHAPP_SOURCE_FILES
-	${CMAKE_CURRENT_SOURCE_DIR}/Source/Main.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Source/Program.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Source/ConsoleInput.cpp)
+source_group ("Include\\" FILES ${HEADER_FILES})
+source_group ("Source\\" FILES ${SOURCE_FILES})
 
-add_executable (${PROJECT_NAME} ${HASHAPP_HEADER_FILES} ${HASHAPP_SOURCE_FILES})
+add_executable (${PROJECT_NAME} ${HEADER_FILES} ${SOURCE_FILES})
 
-target_link_libraries (${PROJECT_NAME} PUBLIC docopt HashCracker)
+target_include_directories (${PROJECT_NAME} PUBLIC  
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Include>)
 
-add_custom_command (TARGET ${PROJECT_NAME} 
-    POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE_DIR:HashCracker>/$<TARGET_FILE_NAME:HashCracker>" "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE_DIR:docopt>/$<TARGET_FILE_NAME:docopt>" "$<TARGET_FILE_DIR:${PROJECT_NAME}>")
+target_link_libraries (${PROJECT_NAME} PUBLIC HashCracker docopt)
 
-install (TARGETS ${PROJECT_NAME}
-	EXPORT ${TARGET_NAME}
-	RUNTIME DESTINATION "${BINARY_INSTALL_DIR}"
-    COMPONENT Applications)
+install (TARGETS ${PROJECT_NAME} EXPORT ${EXPORT_NAME}
+	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

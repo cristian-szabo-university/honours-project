@@ -1,6 +1,3 @@
-set (EXTERN_DOWNLOAD_DIR "${EXTERN_BASE_DIR}/Download")
-set (EXTERN_SOURCE_DIR "${EXTERN_BASE_DIR}/Source")
-
 ExternalProject_Add (
     OpenCL-Headers
 
@@ -12,6 +9,10 @@ ExternalProject_Add (
     BUILD_COMMAND ""
     INSTALL_COMMAND ""
 )
+
+ExternalProject_Get_Property (OpenCL-Headers SOURCE_DIR)
+
+set (OCL_SOURCE_DIR ${SOURCE_DIR})
 
 ExternalProject_Add (
     OpenCL-CPP-Header
@@ -25,6 +26,10 @@ ExternalProject_Add (
     INSTALL_COMMAND ""
 )
 
+ExternalProject_Get_Property (OpenCL-CPP-Header DOWNLOAD_DIR)
+
+set (OCL_CPP_SOURCE_DIR ${DOWNLOAD_DIR})
+
 ExternalProject_Add (
     OpenCL-ICD-Loader
 
@@ -37,22 +42,24 @@ ExternalProject_Add (
     UPDATE_COMMAND ""
 )
 
+ExternalProject_Get_Property (OpenCL-ICD-Loader SOURCE_DIR)
+
+set (OCL_ICDL_SOURCE_DIR ${SOURCE_DIR})
+
 ExternalProject_Add_Step (OpenCL-ICD-Loader copy_opencl_header_files
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl.h"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/opencl.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/opencl.h"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl_platform.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl_platform.h" 
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl_ext.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl_ext.h"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl_gl.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl_gl.h"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl_gl_ext.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl_gl_ext.h"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl_egl.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl_egl.h"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl_d3d10.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl_d3d10.h"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl_d3d11.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl_d3d11.h"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_SOURCE_DIR}/OpenCL-Headers/cl_dx9_media_sharing.h" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl_dx9_media_sharing.h"
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different "${EXTERN_DOWNLOAD_DIR}/OpenCL-CPP-Header/cl.hpp" "${EXTERN_SOURCE_DIR}/OpenCL-ICD-Loader/inc/CL/cl.hpp"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${OCL_SOURCE_DIR}/cl.h" "${OCL_ICDL_SOURCE_DIR}/inc/CL/cl.h"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${OCL_SOURCE_DIR}/opencl.h" "${OCL_ICDL_SOURCE_DIR}/inc/CL/opencl.h"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${OCL_SOURCE_DIR}/cl_platform.h" "${OCL_ICDL_SOURCE_DIR}/inc/CL/cl_platform.h" 
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${OCL_SOURCE_DIR}/cl_ext.h" "${OCL_ICDL_SOURCE_DIR}/inc/CL/cl_ext.h"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${OCL_SOURCE_DIR}/cl_gl.h" "${OCL_ICDL_SOURCE_DIR}/inc/CL/cl_gl.h"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${OCL_SOURCE_DIR}/cl_gl_ext.h" "${OCL_ICDL_SOURCE_DIR}/inc/CL/cl_gl_ext.h"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${OCL_SOURCE_DIR}/cl_egl.h" "${OCL_ICDL_SOURCE_DIR}/inc/CL/cl_egl.h"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${OCL_SOURCE_DIR}/cl_d3d10.h" "${OCL_ICDL_SOURCE_DIR}/inc/CL/cl_d3d10.h"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${OCL_SOURCE_DIR}/cl_d3d11.h" "${OCL_ICDL_SOURCE_DIR}/inc/CL/cl_d3d11.h"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${OCL_SOURCE_DIR}/cl_dx9_media_sharing.h" "${OCL_ICDL_SOURCE_DIR}/inc/CL/cl_dx9_media_sharing.h"
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different "${OCL_CPP_SOURCE_DIR}/cl.hpp" "${OCL_ICDL_SOURCE_DIR}/inc/CL/cl.hpp"
 	DEPENDEES update
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-	LOG 1
-) 
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 ExternalProject_Get_Property (OpenCL-ICD-Loader SOURCE_DIR)
 ExternalProject_Get_Property (OpenCL-ICD-Loader BINARY_DIR)
@@ -61,11 +68,15 @@ set (PROJECT_NAME "OpenCL")
 
 file(MAKE_DIRECTORY "${SOURCE_DIR}/inc")
 
-add_library (${PROJECT_NAME} SHARED IMPORTED)
+add_library (${PROJECT_NAME} STATIC IMPORTED)
 
 set_target_properties (${PROJECT_NAME} PROPERTIES
-	IMPORTED_LOCATION "${BINARY_DIR}/bin/${CMAKE_SHARED_LIBRARY_PREFIX}${PROJECT_NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}"
-    IMPORTED_IMPLIB "${BINARY_DIR}/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}${PROJECT_NAME}${CMAKE_STATIC_LIBRARY_SUFFIX}"
+	IMPORTED_LOCATION "${BINARY_DIR}/bin/${CMAKE_STATIC_LIBRARY_PREFIX}${PROJECT_NAME}${CMAKE_STATIC_LIBRARY_SUFFIX}"
     INTERFACE_INCLUDE_DIRECTORIES "${SOURCE_DIR}/inc")
+    
+if (WIN32)
+    set_target_properties (${PROJECT_NAME} PROPERTIES
+        IMPORTED_LOCATION "${BINARY_DIR}/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}${PROJECT_NAME}${CMAKE_STATIC_LIBRARY_SUFFIX}")
+endif ()
     
 add_dependencies (${PROJECT_NAME} OpenCL-Headers OpenCL-CPP-Header OpenCL-ICD-Loader)

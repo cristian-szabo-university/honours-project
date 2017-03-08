@@ -55,7 +55,21 @@ namespace HonoursProject
             ss << " " << opt;
         }
 
-        handle.build(ss.str().c_str());
+        try
+        {
+            handle.build(ss.str().c_str());
+        }
+        catch (cl::Error& ex)
+        {
+            if (ex.err() != CL_BUILD_PROGRAM_FAILURE)
+            {
+                throw ex;
+            }
+
+            std::string build_log = handle.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device->getHandle());
+
+            throw std::runtime_error(build_log);
+        }
 
         cl_build_status status = handle.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(device->getHandle());
 

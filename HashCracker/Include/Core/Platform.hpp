@@ -28,6 +28,30 @@ namespace HonoursProject
         HASH_CRACKER_PUBLIC std::string CleanCLString(const std::string& str);
 
         template<class T>
+        inline std::string GetTypeName()
+        {
+            std::string result;
+
+            const char* name = typeid(T).name();
+#if WIN32
+            result = name;
+#else
+            int status;
+            char* real_name;
+
+            real_name = abi::__cxa_demangle(name, 0, 0, &status);
+
+            if (status != 0)
+            {
+                result = real_name;
+
+                free(real_name);
+            }
+#endif
+            return result;
+        }
+
+        template<class T>
         inline std::string CleanTypeName()
         {
             std::string result = GetTypeName<T>();
@@ -81,30 +105,6 @@ namespace HonoursProject
                 result[0] = 'u';
             }
 
-            return result;
-        }
-
-        template<class T>
-        inline std::string GetTypeName()
-        {
-            std::string result;
-
-            const char* name = typeid(T).name();
-#if WIN32
-            result = name;
-#else
-            int status;
-            char* real_name;
-
-            real_name = abi::__cxa_demangle(name, 0, 0, &status);
-            
-            if (status != 0)
-            {
-                result = real_name;
-
-                free(real_name);
-            }
-#endif
             return result;
         }
     };

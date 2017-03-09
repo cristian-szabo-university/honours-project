@@ -2,6 +2,10 @@ project (HashCracker)
 
 include (GenerateExportHeader)
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+
+find_package(Threads REQUIRED)
+
 add_custom_command (
     OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/Source/ProgramEntry.cpp" "${CMAKE_CURRENT_BINARY_DIR}/Include/ProgramEntry.hpp"
     COMMAND ${CMAKE_COMMAND} "-DCL_DIR=${CMAKE_CURRENT_SOURCE_DIR}/OpenCL" "-DFILE_OUT=ProgramEntry.cpp" "-DDIR_OUT=${CMAKE_CURRENT_BINARY_DIR}" -P "${CMAKE_SOURCE_DIR}/CMake/File2Code.cmake")
@@ -52,7 +56,7 @@ set (SOURCE_FILES
 
 add_library (${PROJECT_NAME} SHARED ${HEADER_FILES} ${SOURCE_FILES})
 
-target_link_libraries (${PROJECT_NAME} PUBLIC OpenCL)
+target_link_libraries (${PROJECT_NAME} PUBLIC OpenCL Threads::Threads)
 
 target_include_directories (${PROJECT_NAME} PUBLIC  
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Include> 

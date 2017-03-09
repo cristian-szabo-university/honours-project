@@ -36,5 +36,24 @@ namespace HonoursProject
 
             return result;
         }
+
+#if WIN32
+	std::string Demangle(const char* name)
+	{
+	    return name;
+	}
+#else
+	std::string Demangle(const char* name)
+	{
+	    int status = -4;
+
+    	    std::unique_ptr<char, void(*)(void*)> result {
+            	abi::__cxa_demangle(name, NULL, NULL, &status),
+        	std::free
+    	    };
+
+    	    return (status == 0) ? result.get() : name; 
+	}
+#endif
     }
 }

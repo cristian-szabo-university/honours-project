@@ -30,6 +30,7 @@
 #   include <direct.h>
 #else
 #   include <unistd.h>
+#   include <cxxabi.h>
 #endif
 
 #define __CL_ENABLE_EXCEPTIONS

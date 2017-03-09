@@ -36,9 +36,9 @@ namespace HonoursProject
 
             cl_kernel_arg_access_qualifier param_access_qualifier = handle.getArgInfo<CL_KERNEL_ARG_ACCESS_QUALIFIER>(param_pos);
 
-            std::string param_type = KernelPlatform::CleanCLString(handle.getArgInfo<CL_KERNEL_ARG_TYPE_NAME>(param_pos));
+            std::string param_type = Platform::CleanCLString(handle.getArgInfo<CL_KERNEL_ARG_TYPE_NAME>(param_pos));
 
-            std::string param_name = KernelPlatform::CleanCLString(handle.getArgInfo<CL_KERNEL_ARG_NAME>(param_pos));
+            std::string param_name = Platform::CleanCLString(handle.getArgInfo<CL_KERNEL_ARG_NAME>(param_pos));
 
             std::shared_ptr<KernelParam> param = std::make_shared<KernelParam>(shared_from_this()); 
             

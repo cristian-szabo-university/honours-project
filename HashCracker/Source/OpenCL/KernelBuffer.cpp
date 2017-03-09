@@ -103,7 +103,7 @@ namespace HonoursProject
 
         if (iter == data_types.end())
         {
-            throw std::runtime_error("Error: Data type not found!");
+            throw std::runtime_error("Error: Data type not found! " + param->getName());
         }
 
         return iter->second->clone(param, 1);

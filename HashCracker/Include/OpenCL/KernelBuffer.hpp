@@ -41,7 +41,7 @@ namespace HonoursProject
         template<class T>
         static bool HasDataType()
         {
-            std::string type_name = CleanTypeName<T>();
+            std::string type_name = Platform::CleanTypeName<T>();
 
             if (!data_types.count(type_name))
             {
@@ -52,65 +52,27 @@ namespace HonoursProject
         }
 
         template<class T>
-        static void RegisterDataType()
+        static bool RegisterDataType()
         {
-            std::string type_name = CleanTypeName<T>();
-            data_types.insert(std::make_pair(type_name, std::dynamic_pointer_cast<KernelBuffer>(std::make_shared<TKernelBufferValue<T>>(std::shared_ptr<KernelParam>()))));
+            auto type = MakeDataType(T());
 
-            type_name = CleanTypeName<T*>();
-            data_types.insert(std::make_pair(type_name, std::dynamic_pointer_cast<KernelBuffer>(std::make_shared<TKernelBufferArray<T>>(std::shared_ptr<KernelParam>(), 1))));
-        }
+            auto result = data_types.insert(type);
 
-        template< class T >
-        static std::string CleanTypeName()
-        {
-            std::string result = typeid(T).name();
-
-            std::size_t pos = result.find_last_of("::");
-
-            if (pos != std::string::npos)
+            if (!result.second)
             {
-                std::size_t pos_space = result.find(" ");
-
-                result = result.erase(pos_space + 1, pos - pos_space);
+                return false;
             }
 
-            std::size_t pos_star = result.find("*");
+            type = MakeDataType(std::vector<T>());
 
-            if (pos_star != std::string::npos)
+            result = data_types.insert(type);
+
+            if (!result.second)
             {
-                pos_star--;
-
-                if (result[pos_star] == ' ')
-                {
-                    result = result.erase(pos_star, 1);
-                }
+                return false;
             }
 
-            std::size_t pos_s = result.find("__int32");
-
-            if (pos_s != std::string::npos)
-            {
-                result = result.replace(pos_s, 7, "int");
-            }
-
-            std::size_t pos_l = result.find("__int64");
-
-            if (pos_l != std::string::npos)
-            {
-                result = result.replace(pos_l, 7, "long");
-            }
-
-            std::size_t pos_u = result.find("unsigned");
-
-            if (pos_u != std::string::npos)
-            {
-                result = result.erase(pos_u, 8);
-
-                result[0] = 'u';
-            }
-
-            return result;
+            return true;
         }
 
         static std::shared_ptr<KernelBuffer> Create(std::shared_ptr<KernelParam> param);
@@ -155,7 +117,7 @@ namespace HonoursProject
         TKernelBufferValue(std::shared_ptr<KernelParam> param)
             : KernelBuffer(param)
         {
-            type = CleanTypeName<T>();
+            type = Platform::CleanTypeName<T>();
         }
 
         virtual ~TKernelBufferValue()
@@ -244,7 +206,7 @@ namespace HonoursProject
         {
             this->values.resize(size);
 
-            type = CleanTypeName<T*>();
+            type = Platform::CleanTypeName<T*>();
         }
 
         virtual ~TKernelBufferArray()

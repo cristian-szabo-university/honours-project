@@ -15,10 +15,7 @@ namespace HonoursProject
                 | ((std::uint32_t)bytes[2] << 16)
                 | ((std::uint32_t)bytes[3] << 24);
         }
-    }
 
-    namespace KernelPlatform
-    {
         std::string CleanCLString(const std::string & str)
         {
             std::string result = str;

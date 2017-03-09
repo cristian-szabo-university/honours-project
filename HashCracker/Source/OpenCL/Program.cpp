@@ -109,7 +109,7 @@ namespace HonoursProject
         {
             std::shared_ptr<Kernel> kernel = std::make_shared<Kernel>(shared_from_this());
 
-            std::string name = KernelPlatform::CleanCLString(cl_kernel.getInfo<CL_KERNEL_FUNCTION_NAME>());
+            std::string name = Platform::CleanCLString(cl_kernel.getInfo<CL_KERNEL_FUNCTION_NAME>());
 
             if (!kernel->create(name))
             {

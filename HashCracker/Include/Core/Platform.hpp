@@ -2,10 +2,6 @@
 
 namespace HonoursProject
 {
-    class KernelBuffer;
-    template<class T> class TKernelBufferValue;
-    template<class T> class TKernelBufferArray;
-
     namespace Platform
     {
         const std::uint32_t CHAR_SIZE = 256;
@@ -22,73 +18,67 @@ namespace HonoursProject
         const std::size_t MAX_SPEED_CACHE_SIZE = 128;
 
         const std::size_t AUTOTUNE_VALIDATE_CHECKS = 1;
+        const std::size_t AUTOTUNE_DEVICE_SPEED_TRY = 128;
+        const std::size_t AUTOTUNE_KERNEL_LOOPS_TRY = 128;
+        const double AUTOTUNE_TARGET_SPEED = 12;
 
         HASH_CRACKER_PUBLIC std::uint32_t to_int32(const std::uint8_t * bytes);
 
-        HASH_CRACKER_PUBLIC std::string CleanCLString(const std::string& str);
+        HASH_CRACKER_PUBLIC std::string Demangle(const char* name);
 
-	HASH_CRACKER_PUBLIC std::string Demangle(const char* name);
+        HASH_CRACKER_PUBLIC std::string CleanTypeName(std::string type_name);
 
         template<class T>
         inline std::string CleanTypeName()
         {
-            std::string result = Demangle(typeid(T).name());
+            const char* type_name = typeid(T).name();
 
-            if (result.empty())
+            return CleanTypeName(Demangle(type_name));
+        }
+
+        template<class R = void, class T, class U>
+        inline void ExecuteTasks(std::vector<std::shared_ptr<T>>& tasks, U functor)
+        {
+            std::size_t tasks_left = tasks.size();
+            std::vector<std::future<R>> futures;
+
+            for (auto& task : tasks)
             {
-                return result;
+                auto future = std::async(std::launch::async, &T::run, task.get());
+
+                futures.push_back(std::move(future));
             }
 
-            std::size_t pos = result.find_last_of("::");
-
-            if (pos != std::string::npos)
+            while (tasks_left)
             {
-                std::size_t pos_space = result.find(" ");
-
-		if (pos_space == std::string::npos)
-		{
-    		    pos_space = -1;
-		}
-
-                result = result.erase(pos_space + 1, pos - pos_space);
-            }
-
-            std::size_t pos_star = result.find("*");
-
-            if (pos_star != std::string::npos)
-            {
-                pos_star--;
-
-                if (result[pos_star] == ' ')
+                auto future_iter = std::find_if(futures.begin(), futures.end(),
+                    [](const std::future<R>& future)
                 {
-                    result = result.erase(pos_star, 1);
+                    if (!future.valid())
+                    {
+                        return false;
+                    }
+
+                    std::future_status status = future.wait_for(std::chrono::nanoseconds(1));
+
+                    return (status == std::future_status::ready);
+                });
+
+                if (future_iter != futures.end())
+                {
+                    std::size_t index = std::distance(futures.begin(), future_iter);
+
+                    std::shared_ptr<T> task = tasks.at(index);
+
+                    functor(task, std::move(*future_iter), index);
                 }
+
+                tasks_left = std::count_if(futures.begin(), futures.end(),
+                    [](const std::future<R>& future)
+                {
+                    return future.valid();
+                });
             }
-
-            std::size_t pos_s = result.find("__int32");
-
-            if (pos_s != std::string::npos)
-            {
-                result = result.replace(pos_s, 7, "int");
-            }
-
-            std::size_t pos_l = result.find("__int64");
-
-            if (pos_l != std::string::npos)
-            {
-                result = result.replace(pos_l, 7, "long");
-            }
-
-            std::size_t pos_u = result.find("unsigned");
-
-            if (pos_u != std::string::npos)
-            {
-                result = result.erase(pos_u, 8);
-
-                result[0] = 'u';
-            }
-
-            return result;
         }
     };
 
@@ -107,31 +97,31 @@ namespace HonoursProject
         const std::uint32_t MAX_MESSAGE_PREFIX = 1024;
 
 #pragma pack(push, 1)
-        typedef struct
+        struct charset_t
         {
             cl_uchar data[Platform::CHAR_SIZE];
 
             cl_uint size;
-        } charset_t;
+        };
 
-        typedef struct
+        struct message_t
         {
             cl_uint data[16];
 
             cl_uint size;
-        } message_t;
+        };
 
-        typedef struct
+        struct message_prefix_t
         {
             cl_uint data;
-        } message_prefix_t;
+        };
 
-        typedef struct
+        struct message_index_t
         {
             cl_uint found;
             cl_uint msg_batch_pos;
             cl_uint inner_loop_pos;
-        } message_index_t;
+        };
 #pragma pack(pop)
     };
 }

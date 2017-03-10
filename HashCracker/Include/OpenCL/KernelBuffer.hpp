@@ -5,6 +5,8 @@
 namespace HonoursProject
 {
     class KernelParam;
+    template<class T> class TKernelBufferValue;
+    template<class T> class TKernelBufferArray;
 
     class HASH_CRACKER_PUBLIC KernelBuffer : public std::enable_shared_from_this<KernelBuffer>
     {

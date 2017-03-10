@@ -162,7 +162,7 @@ namespace HonoursProject
         std::vector<std::shared_ptr<AttackTask>> attack_tasks;
 
         Platform::ExecuteTasks(kernel_tasks,
-            [&](std::shared_ptr<KernelTask> kernel_task, std::future<void> future, std::size_t index)
+            [&](std::shared_ptr<KernelTask> kernel_task, std::future<void>&& future, std::size_t index)
         {
             try
             {
@@ -203,7 +203,7 @@ namespace HonoursProject
         }
 
         Platform::ExecuteTasks(autotune_tasks,
-            [&](std::shared_ptr<AutotuneTask> autotune_task, std::future<void>& future, std::size_t index)
+            [&](std::shared_ptr<AutotuneTask> autotune_task, std::future<void>&& future, std::size_t index)
         {
             try
             {

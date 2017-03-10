@@ -68,7 +68,7 @@ namespace HonoursProject
             }
 
             Platform::ExecuteTasks<std::string>(attack_tasks,
-                [&](std::shared_ptr<AttackTask> attack_task, std::future<std::string> future, std::size_t index)
+                [&](std::shared_ptr<AttackTask> attack_task, std::future<std::string>&& future, std::size_t index)
             {
                 try
                 {

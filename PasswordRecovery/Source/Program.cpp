@@ -44,12 +44,31 @@ int Program::run()
 
     bool benchmark = args["benchmark"].asBool();
 
-    std::string hash_msg;
+    if (args["md5"].asBool())
+    {
+        hash_factory = std::make_shared<HonoursProject::MD5>();
+    }
+    else if (args["sha1"].asBool())
+    {
+        throw std::runtime_error("Hash function not implemented yet!");
+    }
+
+    std::shared_ptr<HonoursProject::AttackFactory> attack_factory;
+
+    if (args["bruteforce"].asBool())
+    {
+        attack_factory = std::make_shared<HonoursProject::Bruteforce>(hash_factory);
+    }
+    else if (args["dictionary"].asBool())
+    {
+        throw std::runtime_error("Attack not implemented yet!");
+    }
+
     std::vector<std::string> attack_input;
 
     if (args["attack"].asBool())
     {
-        hash_msg = args["<hash>"].asString();
+        attack_input.push_back(args["<hash>"].asString());
 
         if (args["bruteforce"].asBool())
         {
@@ -62,6 +81,8 @@ int Program::run()
     }
     else if (benchmark)
     {
+        attack_input.push_back(std::string(32, 'f'));
+
         if (args["bruteforce"].asBool())
         {
             attack_input.push_back("?a?a?a?a?a?a?a?a");
@@ -70,20 +91,9 @@ int Program::run()
         {
             throw std::runtime_error("Attack not implemented yet!");
         }
-
-        hash_msg = std::string(32, 'f');
     }
 
-    std::shared_ptr<HonoursProject::HashFunc> hash_func;
-
-    if (args["md5"].asBool())
-    {
-        hash_func = std::make_shared<HonoursProject::MD5_HashFunc<HonoursProject::Bruteforce_HashProcess>>();
-    }
-    else if (args["sha1"].asBool())
-    {
-        throw std::runtime_error("Hash function not implemented yet!");
-    }
+    hash_msg = attack_input[0];
 
     HonoursProject::HashCracker::DeviceFilter device_filter;
 
@@ -109,11 +119,11 @@ int Program::run()
         device_filter = HonoursProject::HashCracker::DeviceFilter::CPU_GPU;
     }
     
-    hash_cracker = std::make_shared<HonoursProject::HashCracker>(hash_msg, hash_func, benchmark);
+    hash_cracker = std::make_shared<HonoursProject::HashCracker>(device_filter, benchmark);
     
     HonoursProject::Logger::info("...:::=== Preparing Cracking Process ===:::...\n\n");
 
-    cracked_future = hash_cracker->executeAttack(attack_input, device_filter);
+    cracked_future = hash_cracker->executeAttack(attack_input, attack_factory);
 
     if (benchmark)
     {
@@ -122,23 +132,25 @@ int Program::run()
         HonoursProject::Logger::info("...:::=== Benchmark Statistics ===:::...\n\n");
 
         std::cout << std::setfill('.') << std::setw(25) << std::left << "Hash.Type";
-        std::cout << ": " << hash_cracker->getHashFunc()->type() << std::endl;
+        std::cout << ": " << hash_factory->type() << std::endl;
 
+        std::shared_ptr<HonoursProject::AttackDispatch> attack_dispatch = hash_cracker->getAttackDispatch();
         double total_device_speed = 0.0, total_device_exec = 0.0;
 
-        for (std::size_t device_pos = 0; device_pos < hash_cracker->getDeviceNum(); device_pos++)
+        for (std::size_t device_pos = 0; device_pos < attack_dispatch->getDeviceNum(); device_pos++)
         {
-            double device_speed = hash_cracker->getDeviceSpeed(device_pos);
-            double device_exec = hash_cracker->getDeviceExec(device_pos);
+            std::shared_ptr<HonoursProject::Device> device = attack_dispatch->getDeviceAt(device_pos);
+            double device_speed = attack_dispatch->getDeviceSpeed(device_pos);
+            double device_exec = attack_dispatch->getDeviceExec(device_pos);
 
-            std::cout << std::setfill('.') << std::setw(25) << std::left << ("Speed.Device.#" + std::to_string(device_pos));
+            std::cout << std::setfill('.') << std::setw(25) << std::left << ("Speed.Device.#" + std::to_string(device->getId()));
             std::cout << ": " << format_display_speed(device_speed, device_exec) << std::endl;
 
             total_device_speed += device_speed;
             total_device_exec += device_exec;
         }
 
-        if (hash_cracker->getDeviceNum() > 1)
+        if (attack_dispatch->getDeviceNum() > 1)
         {
             std::cout << std::setfill('.') << std::setw(25) << std::left << "Speed.Device.Total";
             std::cout << ": " << format_display_speed(total_device_speed, total_device_exec) << std::endl;
@@ -173,13 +185,13 @@ int Program::run()
 
         if (!plain_msg.empty())
         {
-            std::cout << std::endl << hash_msg << ": " << plain_msg << std::endl;
+            std::cout << std::endl << attack_input[0] << ": " << plain_msg << std::endl;
         }
         else
         {
             if (hash_cracker->getStatus() == HonoursProject::HashCracker::Status::Idle)
             {
-                std::cout << std::endl << hash_msg << ": " << "Not found!" << std::endl;
+                std::cout << std::endl << attack_input[0] << ": " << "Not found!" << std::endl;
             }
         }
     }
@@ -222,14 +234,16 @@ void Program::process_input_command(char cmd)
 
     case 's':
         {
+            std::shared_ptr<HonoursProject::AttackDispatch> attack_dispatch = hash_cracker->getAttackDispatch();
+
             std::cout << std::setfill('.') << std::setw(25) << std::left << "Cracking.Status";
             std::cout << ": " << hash_cracker->getStatus() << std::endl;
 
             std::cout << std::setfill('.') << std::setw(25) << std::left << "Hash.Target";
-            std::cout << ": " << hash_cracker->getHashMsg() << std::endl;
+            std::cout << ": " << hash_msg << std::endl;
 
             std::cout << std::setfill('.') << std::setw(25) << std::left << "Hash.Type";
-            std::cout << ": " << hash_cracker->getHashFunc()->type() << std::endl;
+            std::cout << ": " << hash_factory->type() << std::endl;
 
             std::time_t start_time = std::chrono::system_clock::to_time_t(hash_cracker->getTimeStart());
 
@@ -241,25 +255,26 @@ void Program::process_input_command(char cmd)
             std::cout << std::setfill('.') << std::setw(25) << std::left << "Time.Estimated";
             std::cout << ": " << std::put_time(std::gmtime(&finish_time), "%D %T") << " " << format_display_time(hash_cracker->getTimeEstimated()) << std::endl;
 
-            std::cout << std::setfill('.') << std::setw(25) << std::left << "Cracking.Progress";
-            ss << hash_cracker->getMessageProgress() << " / " << hash_cracker->getMessageTotal();
-            std::cout << ": " << ss.str() << std::endl;
+            std::cout << std::setfill('.') << std::setw(25) << std::left << "Cracking.Progress";           
+            ss << attack_dispatch->getTotalMessageProgress() << " / " << hash_cracker->getTotalMessageSize();
+            std::cout << ": " << ss.str() << std::endl; ss.clear();
 
             double total_device_speed = 0.0, total_device_exec = 0.0;
 
-            for (std::size_t device_pos = 0; device_pos < hash_cracker->getDeviceNum(); device_pos++)
+            for (std::size_t device_pos = 0; device_pos < attack_dispatch->getDeviceNum(); device_pos++)
             {
-                double device_speed = hash_cracker->getDeviceSpeed(device_pos);
-                double device_exec = hash_cracker->getDeviceExec(device_pos);
+                std::shared_ptr<HonoursProject::Device> device = attack_dispatch->getDeviceAt(device_pos);
+                double device_speed = attack_dispatch->getDeviceSpeed(device_pos);
+                double device_exec = attack_dispatch->getDeviceExec(device_pos);
 
-                std::cout << std::setfill('.') << std::setw(25) << std::left << ("Speed.Device.#" + std::to_string(device_pos));
+                std::cout << std::setfill('.') << std::setw(25) << std::left << ("Speed.Device.#" + std::to_string(device->getId()));
                 std::cout << ": " << format_display_speed(device_speed, device_exec) << std::endl;
 
                 total_device_speed += device_speed;
                 total_device_exec += device_exec;
             }
 
-            if (hash_cracker->getDeviceNum() > 1)
+            if (attack_dispatch->getDeviceNum() > 1)
             {
                 std::cout << std::setfill('.') << std::setw(25) << std::left << "Speed.Device.*";
                 std::cout << ": " << format_display_speed(total_device_speed, total_device_exec) << std::endl;

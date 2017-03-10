@@ -35,6 +35,10 @@ private:
 
     std::map<std::string, docopt::value> args;
 
+    std::string hash_msg;
+
+    std::shared_ptr<HonoursProject::HashFactory> hash_factory;
+
     std::shared_ptr<HonoursProject::HashCracker> hash_cracker;
 
     std::locale comma_locale;

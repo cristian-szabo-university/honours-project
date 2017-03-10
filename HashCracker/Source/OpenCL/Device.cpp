@@ -316,7 +316,19 @@ namespace HonoursProject
 
         std::vector<cl::Device> cl_devices;
 
-        platform.getDevices(device_filter, &cl_devices);
+        try
+        {
+            platform.getDevices(device_filter, &cl_devices);
+        }
+        catch (cl::Error& ex)
+        {
+            if (ex.err() != CL_DEVICE_NOT_FOUND)
+            {
+                throw ex;
+            }
+
+            return result;
+        }
 
         for (auto& cl_device : cl_devices)
         {

@@ -11,13 +11,29 @@
 
 namespace HonoursProject
 {
+    AutotuneTask::AutotuneTask(double target_speed)
+        :   target_speed(target_speed), 
+            device_speed(KernelPlatform::DEVICE_SPEED_MIN), 
+            kernel_loops(KernelPlatform::KERNEL_LOOPS_MIN)
+    {
+    }
+
     AutotuneTask::~AutotuneTask()
     {
     }
 
-    void AutotuneTask::run(std::shared_ptr<AttackTask> attack_task, double target_speed)
+    void AutotuneTask::transfer(std::shared_ptr<BaseTask> task)
     {
-        std::shared_ptr<Kernel> kernel = attack_task->getKernel();
+        std::shared_ptr<AttackTask> cast_task = std::dynamic_pointer_cast<AttackTask>(task);
+
+        if (cast_task)
+        {
+            kernel = cast_task->getKernel();
+        }
+    }
+
+    void AutotuneTask::run()
+    {
         std::shared_ptr<Device> device = kernel->getProgram()->getDevice();
         
         std::uint32_t device_power_max = device->getMaxComputeUnits() * device->getMaxWorkGroupSize() * KernelPlatform::DEVICE_SPEED_MAX;
@@ -27,11 +43,11 @@ namespace HonoursProject
         kernel->setParam("msg", std::vector<KernelPlatform::message_t>(device_power_max, msg_data));
         kernel->setParam("msg_prefix", std::vector<KernelPlatform::message_prefix_t>(KernelPlatform::KERNEL_LOOPS_MAX));
 
-        double min_exec_time = try_execute(kernel, device->getMaxWorkGroupSize(), device->getMaxWorkGroupSize());
+        double min_exec_time = executeKernel(kernel, Platform::AUTOTUNE_DEVICE_SPEED_TRY, Platform::AUTOTUNE_KERNEL_LOOPS_TRY);
 
         for (std::size_t i = 0; i < Platform::AUTOTUNE_VALIDATE_CHECKS; i++)
         {
-            double check_exec_ms = try_execute(kernel, device->getMaxWorkGroupSize(), device->getMaxWorkGroupSize());
+            double check_exec_ms = executeKernel(kernel, Platform::AUTOTUNE_DEVICE_SPEED_TRY, Platform::AUTOTUNE_KERNEL_LOOPS_TRY);
 
             min_exec_time = std::min(min_exec_time, check_exec_ms);
         }
@@ -49,11 +65,11 @@ namespace HonoursProject
 
             std::shared_ptr<Kernel> new_kernel = new_prog->findKernel(kernel->getName());
 
-            double exec_time = try_execute(new_kernel, device->getMaxWorkGroupSize(), device->getMaxWorkGroupSize());
+            double exec_time = executeKernel(new_kernel, Platform::AUTOTUNE_DEVICE_SPEED_TRY, Platform::AUTOTUNE_KERNEL_LOOPS_TRY);
 
             for (std::size_t i = 0; i < Platform::AUTOTUNE_VALIDATE_CHECKS; i++)
             {
-                double check_exec_time = try_execute(new_kernel, device->getMaxWorkGroupSize(), device->getMaxWorkGroupSize());
+                double check_exec_time = executeKernel(new_kernel, Platform::AUTOTUNE_DEVICE_SPEED_TRY, Platform::AUTOTUNE_KERNEL_LOOPS_TRY);
 
                 exec_time = std::min(exec_time, check_exec_time);
             }
@@ -72,22 +88,17 @@ namespace HonoursProject
             }
         }
 
-        attack_task->setKernel(kernel);
-
-        std::uint32_t device_speed = KernelPlatform::DEVICE_SPEED_MIN;
-        std::uint32_t kernel_loops = KernelPlatform::KERNEL_LOOPS_MIN;
-
         // first find out highest kernel-loops that stays below target_ms
 
         for (kernel_loops = KernelPlatform::KERNEL_LOOPS_MAX; 
             kernel_loops > KernelPlatform::KERNEL_LOOPS_MIN; 
             kernel_loops >>= 1)
         {
-            double exec_ms = try_execute(kernel, 1, kernel_loops);
+            double exec_ms = executeKernel(kernel, 1, kernel_loops);
 
             for (std::size_t i = 0; i < Platform::AUTOTUNE_VALIDATE_CHECKS; i++)
             {
-                double check_exec_ms = try_execute(kernel, 1, kernel_loops);
+                double check_exec_ms = executeKernel(kernel, 1, kernel_loops);
 
                 exec_ms = std::min(exec_ms, check_exec_ms);
             }
@@ -104,11 +115,11 @@ namespace HonoursProject
         {
             std::uint32_t device_speed_try = 1u << i;
 
-            double exec_ms = try_execute(kernel, device_speed_try, kernel_loops);
+            double exec_ms = executeKernel(kernel, device_speed_try, kernel_loops);
 
             for (std::size_t i = 0; i < Platform::AUTOTUNE_VALIDATE_CHECKS; i++)
             {
-                double check_exec_ms = try_execute(kernel, device_speed_try, kernel_loops);
+                double check_exec_ms = executeKernel(kernel, device_speed_try, kernel_loops);
 
                 exec_ms = std::min(exec_ms, check_exec_ms);
             }
@@ -121,11 +132,11 @@ namespace HonoursProject
             device_speed = device_speed_try;
         }
 
-        double last_exec_ms = try_execute(kernel, device_speed, kernel_loops);
+        double last_exec_ms = executeKernel(kernel, device_speed, kernel_loops);
 
         for (std::size_t i = 0; i < Platform::AUTOTUNE_VALIDATE_CHECKS; i++)
         {
-            double check_exec_ms = try_execute(kernel, device_speed, kernel_loops);
+            double check_exec_ms = executeKernel(kernel, device_speed, kernel_loops);
 
             last_exec_ms = std::min(last_exec_ms, check_exec_ms);
         }
@@ -158,11 +169,11 @@ namespace HonoursProject
 
             diff_new = diff;
 
-            double exec_ms = try_execute(kernel, device_speed_try, kernel_loops_try);
+            double exec_ms = executeKernel(kernel, device_speed_try, kernel_loops_try);
 
             for (int i = 0; i < Platform::AUTOTUNE_VALIDATE_CHECKS; i++)
             {
-                double check_exec_ms = try_execute(kernel, device_speed_try, kernel_loops_try);
+                double check_exec_ms = executeKernel(kernel, device_speed_try, kernel_loops_try);
 
                 exec_ms = std::min(exec_ms, check_exec_ms);
             }
@@ -187,13 +198,27 @@ namespace HonoursProject
             device_speed = (std::uint32_t)(device_speed * speed_ratio);
         }
 
-        Logger::info("Device.#%d: ....: Device Speed %d and Kernel Loops %d adjusted.\n", device->getId(), device_speed, kernel_loops);
+        Logger::info("Device.#%d: ....: Device Speed %d | Kernel Loops %d | Vector Width %d.\n", device->getId(), device_speed, kernel_loops, vector_width);
 
-        attack_task->setBatchSize(device->getMaxComputeUnits() * device->getMaxWorkGroupSize() * device_speed);
-        attack_task->setInnerLoopStep(kernel_loops);
+        device_speed = device->getMaxComputeUnits() * device->getMaxWorkGroupSize() * device_speed;
     }
 
-    double AutotuneTask::try_execute(std::shared_ptr<Kernel> kernel, std::uint32_t device_speed, std::uint32_t kernel_loops)
+    std::shared_ptr<Kernel> AutotuneTask::getKernel()
+    {
+        return kernel;
+    }
+
+    std::uint32_t AutotuneTask::getDeviceSpeed()
+    {
+        return device_speed;
+    }
+
+    std::uint32_t AutotuneTask::getKernelLoops()
+    {
+        return kernel_loops;
+    }
+
+    double AutotuneTask::executeKernel(std::shared_ptr<Kernel> kernel, std::uint32_t device_speed, std::uint32_t kernel_loops)
     {
         std::shared_ptr<Device> device = kernel->getProgram()->getDevice();
 

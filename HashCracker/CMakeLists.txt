@@ -18,6 +18,7 @@ file (GLOB BASE_HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Include/*.hpp")
 file (GLOB CORE_HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Include/Core/*.hpp")
 file (GLOB OPENCL_HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Include/OpenCL/*.hpp")
 file (GLOB TASKS_HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Include/Tasks/*.hpp")
+file (GLOB BRUTEFORCE_TASKS_HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Include/Tasks/Bruteforce/*.hpp")
 
 list (APPEND BASE_HEADER_FILES
     ${CMAKE_CURRENT_BINARY_DIR}/Include/ProgramEntry.hpp
@@ -28,17 +29,20 @@ source_group ("Include\\" FILES ${BASE_HEADER_FILES})
 source_group ("Include\\Core" FILES ${CORE_HEADER_FILES})
 source_group ("Include\\OpenCL" FILES ${OPENCL_HEADER_FILES})
 source_group ("Include\\Tasks" FILES ${TASKS_HEADER_FILES})
+source_group ("Include\\Tasks\\Bruteforce" FILES ${BRUTEFORCE_TASKS_HEADER_FILES})
 
 set (HEADER_FILES
 	${BASE_HEADER_FILES}
     ${CORE_HEADER_FILES}
     ${OPENCL_HEADER_FILES}
-    ${TASKS_HEADER_FILES})
+    ${TASKS_HEADER_FILES}
+    ${BRUTEFORCE_TASKS_HEADER_FILES})
 
 file (GLOB BASE_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Source/*.cpp")
 file (GLOB CORE_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Source/Core/*.cpp")
 file (GLOB OPENCL_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Source/OpenCL/*.cpp")
 file (GLOB TASKS_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Source/Tasks/*.cpp")
+file (GLOB BRUTEFORCE_TASKS_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Source/Tasks/Bruteforce/*.cpp")
 
 list (APPEND BASE_SOURCE_FILES
     ${CMAKE_CURRENT_BINARY_DIR}/Source/ProgramEntry.cpp)
@@ -47,12 +51,14 @@ source_group ("Source\\" FILES ${BASE_SOURCE_FILES})
 source_group ("Source\\Core" FILES ${CORE_SOURCE_FILES})
 source_group ("Source\\OpenCL" FILES ${OPENCL_SOURCE_FILES})
 source_group ("Source\\Tasks" FILES ${TASKS_SOURCE_FILES})
+source_group ("Source\\Tasks\\Bruteforce" FILES ${BRUTEFORCE_TASKS_SOURCE_FILES})
 
 set (SOURCE_FILES
 	${BASE_SOURCE_FILES}
     ${CORE_SOURCE_FILES}
     ${OPENCL_SOURCE_FILES}
-    ${TASKS_SOURCE_FILES})
+    ${TASKS_SOURCE_FILES}
+    ${BRUTEFORCE_TASKS_SOURCE_FILES})
 
 add_library (${PROJECT_NAME} SHARED ${HEADER_FILES} ${SOURCE_FILES})
 

@@ -2,38 +2,68 @@
 
 #include "Core/HashCracker.hpp"
 
+#include "Core/AttackDispatch.hpp"
 #include "Core/Logger.hpp"
 #include "Core/Charset.hpp"
-#include "Core/HashFunc.hpp"
+#include "Core/AttackFactory.hpp"
 
 #include "OpenCL/Device.hpp"
 
 #include "Tasks/KernelTask.hpp"
 #include "Tasks/SetupTask.hpp"
 #include "Tasks/AttackTask.hpp"
-#include "Tasks/BruteforceSetupTask.hpp"
+#include "Tasks/Bruteforce/BruteforceSetupTask.hpp"
 #include "Tasks/AttackTask.hpp"
-#include "Tasks/WorkDispatchTask.hpp"
 #include "Tasks/AutotuneTask.hpp"
 
 namespace HonoursProject
 {
-    HashCracker::HashCracker(const std::string& hash_msg, std::shared_ptr<HashFunc> hash_func, bool benchmark)
-        : hash_msg(hash_msg), hash_func(hash_func), benchmark(benchmark), status(HashCracker::Status::Idle)
+    HashCracker::HashCracker(DeviceFilter device_filter, bool benchmark)
+        : benchmark(benchmark), status(HashCracker::Status::Idle)
     {
-        if (hash_msg.empty())
+        std::vector<cl::Platform> cl_platforms;
+
+        try
         {
-            throw std::runtime_error("Error: Hash message can't be empty!");
+            cl::Platform::get(&cl_platforms);
+        }
+        catch (cl::Error& ex)
+        {
+            if (ex.err() != CL_PLATFORM_NOT_FOUND_KHR)
+            {
+                throw ex;
+            }
+
+            throw std::runtime_error("Error: No platform found!");
         }
 
-        work_dispatch = std::make_shared<WorkDispatchTask>();
+        for (auto& cl_platform : cl_platforms)
+        {
+            cl_device_type filter;
+
+            switch (device_filter)
+            {
+            case DeviceFilter::CPU_ONLY:
+                filter = CL_DEVICE_TYPE_CPU;
+                break;
+
+            case DeviceFilter::GPU_ONLY:
+                filter = CL_DEVICE_TYPE_GPU;
+                break;
+
+            case DeviceFilter::CPU_GPU:
+                filter = CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU;
+                break;
+            }
+
+            std::vector<std::shared_ptr<Device>> platform_devices = Device::Create(cl_platform, filter);
+
+            std::copy(platform_devices.begin(), platform_devices.end(), std::back_inserter(devices));
+        }
     }
 
     HashCracker::~HashCracker()
     {
-        work_dispatch.reset();
-
-        attack_tasks.clear();
     }
 
     void HashCracker::setStatus(Status status)
@@ -51,14 +81,14 @@ namespace HonoursProject
         return benchmark;
     }
 
-    std::string HashCracker::getHashMsg()
+    std::shared_ptr<AttackDispatch> HashCracker::getAttackDispatch()
     {
-        return hash_msg;
+        return attack_dispatch;
     }
 
-    std::shared_ptr<HashFunc> HashCracker::getHashFunc()
+    std::uint64_t HashCracker::getTotalMessageSize()
     {
-        return hash_func;
+        return total_message_size;
     }
 
     std::chrono::system_clock::time_point HashCracker::getTimeStart()
@@ -82,81 +112,20 @@ namespace HonoursProject
     {
         double hash_speed_ms = 0.0;
 
-        for (auto device : attack_tasks)
+        for (std::size_t device_pos = 0; device_pos < attack_dispatch->getDeviceNum(); device_pos++)
         {
-            hash_speed_ms += device->getAvgSpeedTime();
+            hash_speed_ms += attack_dispatch->getDeviceSpeed(device_pos);
         }
 
-        hash_speed_ms /= attack_tasks.size();
+        hash_speed_ms /= attack_dispatch->getDeviceNum();
 
-        double eta_time = total_message_count / hash_speed_ms / 1000.0;
+        double eta_time = total_message_size / hash_speed_ms / 1000.0;
 
         return std::chrono::seconds(static_cast<std::uint64_t>(eta_time));
     }
 
-    std::uint64_t HashCracker::getMessageTotal()
+    std::future<std::string> HashCracker::executeAttack(const std::vector<std::string>& input, std::shared_ptr<AttackFactory> attack_factory)
     {
-        return total_message_count;
-    }
-
-    std::uint64_t HashCracker::getMessageProgress()
-    {
-        return work_dispatch->getTotalMessageTested();
-    }
-
-    std::size_t HashCracker::getDeviceNum()
-    {
-        return attack_tasks.size();
-    }
-
-    double HashCracker::getDeviceSpeed(std::size_t device_pos)
-    {
-        return attack_tasks.at(device_pos)->getAvgSpeedTime();
-    }
-
-    double HashCracker::getDeviceExec(std::size_t device_pos)
-    {
-        return attack_tasks.at(device_pos)->getAvgExecTime();
-    }
-
-    std::future<std::string> HashCracker::executeAttack(const std::vector<std::string>& input, DeviceFilter device_filter)
-    {
-        attack_tasks.clear();
-
-        std::vector<cl::Platform> platforms;
-        cl::Platform::get(&platforms);
-
-        if (platforms.size() == 0)
-        {
-            throw std::runtime_error("Error: No platform found!");
-        }
-
-        std::vector<std::shared_ptr<Device>> devices;
-
-        for (auto& platform : platforms)
-        {
-            cl_device_type filter;
-
-            switch (device_filter)
-            {
-            case DeviceFilter::CPU_ONLY:
-                filter = CL_DEVICE_TYPE_CPU;
-                break;
-
-            case DeviceFilter::GPU_ONLY:
-                filter = CL_DEVICE_TYPE_GPU;
-                break;
-
-            case DeviceFilter::CPU_GPU:
-                filter = CL_DEVICE_TYPE_ALL;
-                break;
-            }
-
-            std::vector<std::shared_ptr<Device>> platform_devices = Device::Create(platform, filter);
-
-            std::copy(platform_devices.begin(), platform_devices.end(), std::back_inserter(devices));
-        }
-
         if (devices.size() == 0)
         {
             throw std::runtime_error("Error: No device found to execute attack!");
@@ -164,9 +133,9 @@ namespace HonoursProject
 
         Logger::info("# Setup Attack\n\n");
 
-        std::shared_ptr<SetupTask> setup_task = hash_func->setup_task();
+        std::shared_ptr<SetupTask> setup_task = attack_factory->createSetupTask(input);
 
-        auto future = std::async(std::launch::async, &SetupTask::run, setup_task.get(), input);
+        auto future = std::async(std::launch::async, &SetupTask::run, setup_task.get());
 
         if (!future.get())
         {
@@ -175,73 +144,43 @@ namespace HonoursProject
 
         Logger::info("\n");
 
-        std::uint64_t total_batch_size = setup_task->getTotalBatchSize();
-
-        total_message_count = setup_task->getTotalBatchSize() * setup_task->getInnerLoopSize();
-
-        std::vector<std::uint32_t> msg_dgst;
-
-        for (std::size_t digest_pos = 0; digest_pos < 1; digest_pos++)
-        {
-            std::vector<std::uint32_t> result = hash_func->parse(hash_msg);
-
-            std::copy(result.begin(), result.end(), std::back_inserter(msg_dgst));
-        }
+        total_message_size = setup_task->getTotalBatchSize() * setup_task->getInnerLoopSize();
 
         Logger::info("# Kernel Setup\n\n");
 
         std::vector<std::shared_ptr<KernelTask>> kernel_tasks;
 
-        std::vector<std::future<void>> kernel_futures;
-
         for (auto& device : devices)
         {
-            std::shared_ptr<KernelTask> kernel_task = hash_func->kernel_task();
+            std::shared_ptr<KernelTask> kernel_task = attack_factory->createKernelTask(device);
 
             kernel_task->transfer(setup_task);
 
             kernel_tasks.push_back(kernel_task);
-
-            auto future = std::async(std::launch::async, &KernelTask::run, kernel_task.get(), device, hash_func, msg_dgst);
-
-            kernel_futures.push_back(std::move(future));
         }
 
-        while (kernel_futures.size() > 0)
+        std::vector<std::shared_ptr<AttackTask>> attack_tasks;
+
+        Platform::ExecuteTasks(kernel_tasks,
+            [&](std::shared_ptr<KernelTask> kernel_task, std::future<void> future, std::size_t index)
         {
-            auto future_iter = std::find_if(kernel_futures.begin(), kernel_futures.end(),
-                [](const std::future<void>& future)
+            try
             {
-                std::future_status status = future.wait_for(std::chrono::nanoseconds(1));
+                future.get();
 
-                return (status == std::future_status::ready);
-            });
+                std::shared_ptr<AttackTask> attack_task = attack_factory->createAttakTask(shared_from_this());
+                attack_task->transfer(setup_task);
+                attack_task->transfer(kernel_task);
 
-            if (future_iter != kernel_futures.end())
-            {
-                try
-                {
-                    future_iter->get();
-
-                    std::size_t kernel_pos = std::distance(future_iter, kernel_futures.end()) - 1;
-                    std::shared_ptr<KernelTask> kernel_task = kernel_tasks.at(kernel_pos);
-
-                    std::shared_ptr<AttackTask> attack_task = hash_func->attack_task();
-                    attack_task->transfer(setup_task);
-                    attack_task->transfer(kernel_task);
-
-                    attack_tasks.push_back(attack_task);
-                }
-                catch (std::exception& ex)
-                {
-                    Logger::error("Error: Failed to create kernel program! %s", ex.what());
-                }
-
-                future_iter = std::rotate(future_iter, future_iter + 1, kernel_futures.end());
+                attack_tasks.push_back(attack_task);
             }
+            catch (std::exception& ex)
+            {
+                Logger::error("Error: Failed to setup attack! %s", ex.what());
+            }
+        });
 
-            future_iter = kernel_futures.erase(future_iter, kernel_futures.end());
-        }
+        kernel_tasks.clear();
 
         Logger::info("\n");
 
@@ -250,51 +189,34 @@ namespace HonoursProject
             throw std::runtime_error("Error: No attack was able to create for any device!");
         }
 
-        kernel_tasks.clear();
-
         Logger::info("# Autotune Devices\n\n");
 
         std::vector<std::shared_ptr<AutotuneTask>> autotune_tasks;
 
-        std::vector<std::future<void>> autotune_futures;
-
         for (auto& attack_task : attack_tasks)
         {
-            std::shared_ptr<AutotuneTask> autotune_task = std::make_shared<AutotuneTask>();
+            std::shared_ptr<AutotuneTask> autotune_task = std::make_shared<AutotuneTask>(Platform::AUTOTUNE_TARGET_SPEED);
+
+            autotune_task->transfer(attack_task);
 
             autotune_tasks.push_back(autotune_task);
-
-            auto future = std::async(std::launch::async, &AutotuneTask::run, autotune_task.get(), attack_task, 12);
-
-            autotune_futures.push_back(std::move(future));
         }
 
-        while (autotune_futures.size() > 0)
+        Platform::ExecuteTasks(autotune_tasks,
+            [&](std::shared_ptr<AutotuneTask> autotune_task, std::future<void>& future, std::size_t index)
         {
-            auto future_iter = std::find_if(autotune_futures.begin(), autotune_futures.end(),
-                [](const std::future<void>& future)
+            try
             {
-                std::future_status status = future.wait_for(std::chrono::nanoseconds(1));
+                future.get();
 
-                return (status == std::future_status::ready);
-            });
-
-            if (future_iter != autotune_futures.end())
-            {
-                try
-                {
-                    future_iter->get();
-                }
-                catch (std::exception& ex)
-                {
-                    Logger::error("Error: Failed to create kernel program!", ex.what());
-                }
-
-                future_iter = std::rotate(future_iter, future_iter + 1, autotune_futures.end());
+                std::shared_ptr<AttackTask> attack_task = attack_tasks.at(index);
+                attack_task->transfer(autotune_task);
             }
-
-            future_iter = autotune_futures.erase(future_iter, autotune_futures.end());
-        }
+            catch (std::exception& ex)
+            {
+                Logger::error("Error: Failed to adjust attack speed! %s", ex.what());
+            }
+        });
 
         autotune_tasks.clear();
 
@@ -302,6 +224,8 @@ namespace HonoursProject
 
         start_time = std::chrono::system_clock::now();
 
-        return std::async(std::launch::async, &WorkDispatchTask::run, work_dispatch.get(), shared_from_this(), attack_tasks, total_batch_size);
+        attack_dispatch = std::make_shared<AttackDispatch>(shared_from_this(), attack_tasks, setup_task->getTotalBatchSize());
+
+        return std::async(std::launch::async, &AttackDispatch::execute, attack_dispatch.get());
     }
 }

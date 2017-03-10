@@ -4,9 +4,9 @@
 
 namespace HonoursProject
 {
-    class WorkDispatchTask;
+    class AttackDispatch;
     class Device;
-    class HashFunc;
+    class AttackFactory;
     class AttackTask;
 
     class HASH_CRACKER_PUBLIC HashCracker : public std::enable_shared_from_this<HashCracker>
@@ -33,7 +33,7 @@ namespace HonoursProject
             MaxCount
         };
 
-        HashCracker(const std::string& hash_msg, std::shared_ptr<HashFunc> hash_func, bool benchmark);
+        HashCracker(DeviceFilter device_filter, bool benchmark);
 
         ~HashCracker();
 
@@ -43,9 +43,9 @@ namespace HonoursProject
 
         bool benchmarkEnable();
 
-        std::string getHashMsg();
+        std::shared_ptr<AttackDispatch> getAttackDispatch();
 
-        std::shared_ptr<HashFunc> getHashFunc();
+        std::uint64_t getTotalMessageSize();
 
         std::chrono::system_clock::time_point getTimeStart();
 
@@ -55,17 +55,7 @@ namespace HonoursProject
 
         std::chrono::seconds getTimeEstimated();
 
-        std::uint64_t getMessageTotal();
-
-        std::uint64_t getMessageProgress();
-
-        std::size_t getDeviceNum();
-
-        double getDeviceSpeed(std::size_t device_pos);
-
-        double getDeviceExec(std::size_t device_pos);
-
-        std::future<std::string> executeAttack(const std::vector<std::string>& input, DeviceFilter device_filter);
+        std::future<std::string> executeAttack(const std::vector<std::string>& input, std::shared_ptr<AttackFactory> attack_factory);
 
     private:
 
@@ -73,21 +63,13 @@ namespace HonoursProject
 
         bool benchmark;
 
-        std::string hash_msg;
-
-        std::string plain_msg;
-
-        std::shared_ptr<HashFunc> hash_func;
-
-        std::uint64_t total_message_count;
+        std::uint64_t total_message_size;
 
         std::chrono::system_clock::time_point start_time;
 
-        std::shared_ptr<WorkDispatchTask> work_dispatch;
+        std::vector<std::shared_ptr<Device>> devices;
 
-        std::vector<std::shared_ptr<AttackTask>> attack_tasks;
-
-        std::future<void> worker_future;
+        std::shared_ptr<AttackDispatch> attack_dispatch;
 
     };
 
@@ -95,11 +77,11 @@ namespace HonoursProject
     {
         switch (status)
         {
-        case HonoursProject::HashCracker::Status::Aborted: os << "Aborted"; break;
-        case HonoursProject::HashCracker::Status::Cracked: os << "Cracked"; break;
-        case HonoursProject::HashCracker::Status::Idle: os << "Idle"; break;
-        case HonoursProject::HashCracker::Status::Paused: os << "Paused"; break;
-        case HonoursProject::HashCracker::Status::Running: os << "Running"; break;
+            case HonoursProject::HashCracker::Status::Aborted: os << "Aborted"; break;
+            case HonoursProject::HashCracker::Status::Cracked: os << "Cracked"; break;
+            case HonoursProject::HashCracker::Status::Idle: os << "Idle"; break;
+            case HonoursProject::HashCracker::Status::Paused: os << "Paused"; break;
+            case HonoursProject::HashCracker::Status::Running: os << "Running"; break;
         }
 
         return os;

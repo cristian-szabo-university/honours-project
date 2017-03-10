@@ -20,4 +20,9 @@ namespace HonoursProject
     {
         return inner_loop_size;
     }
+
+    std::vector<std::uint32_t> SetupTask::getMessageDigest()
+    {
+        return msg_dgst;
+    }
 }

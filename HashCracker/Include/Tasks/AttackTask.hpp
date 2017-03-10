@@ -11,13 +11,15 @@ namespace HonoursProject
     class Device;
     class KernelTask;
 
-    class HASH_CRACKER_PUBLIC AttackTask : public TTask<std::string, std::shared_ptr<HashCracker>>
+    class HASH_CRACKER_PUBLIC AttackTask : public TTask<std::string>
     {
     public:
 
+        AttackTask(std::shared_ptr<HashCracker> hash_cracker);
+
         virtual ~AttackTask();
 
-        virtual std::string run(std::shared_ptr<HashCracker> hash_cracker) override;
+        virtual std::string run() override;
 
         virtual void transfer(std::shared_ptr<BaseTask> task) override;
 
@@ -37,15 +39,19 @@ namespace HonoursProject
 
         std::uint32_t getInnerLoopStep();
 
-        double getAvgExecTime();
+        double getExecTime();
 
-        double getAvgSpeedTime();
+        double getSpeedTime();
 
         void setKernel(std::shared_ptr<Kernel> kernel);
 
         std::shared_ptr<Kernel> getKernel();
 
+        std::shared_ptr<Device> getDevice();
+
     protected:
+
+        std::shared_ptr<HashCracker> hash_cracker;
 
         std::shared_ptr<Kernel> kernel_hash_crack;
 
@@ -63,7 +69,7 @@ namespace HonoursProject
 
         std::list<double> exec_ms;
 
-        std::list< std::pair<std::uint64_t, std::uint64_t> > speed_ms;
+        std::list<std::pair<std::uint64_t, std::uint64_t>> speed_ms;
 
         virtual void preKernelExecute(std::uint32_t inner_loop_left, std::uint32_t inner_loop_pos);
 

@@ -1,11 +1,11 @@
 #include "Config.hpp"
 
 #include "Core/Charset.hpp"
-#include "Core/HashFunc.hpp"
+#include "Core/HashFactory.hpp"
 #include "Core/Logger.hpp"
 
-#include "Tasks/BruteforceKernelTask.hpp"
-#include "Tasks/BruteforceSetupTask.hpp"
+#include "Tasks/Bruteforce/BruteforceKernelTask.hpp"
+#include "Tasks/Bruteforce/BruteforceSetupTask.hpp"
 
 #include "OpenCL/Device.hpp"
 #include "OpenCL/Kernel.hpp"
@@ -14,16 +14,21 @@
 
 namespace HonoursProject
 {
+    BruteforceKernelTask::BruteforceKernelTask(std::shared_ptr<Device> device, std::shared_ptr<HashFactory> hash_factory)
+        : device(device), hash_factory(hash_factory)
+    {
+    }
+
     BruteforceKernelTask::~BruteforceKernelTask()
     {
     }
 
-    void BruteforceKernelTask::run(std::shared_ptr<Device> device, std::shared_ptr<HashFunc> hash_func, std::vector<std::uint32_t> msg_dgst)
+    void BruteforceKernelTask::run()
     {
         std::vector<std::string> build_opts;
         build_opts.push_back("-DVECTOR_SIZE=" + std::to_string(device->getVectorWidth()));
 
-        std::array<std::uint32_t, 4> digest = hash_func->digest();
+        std::array<std::uint32_t, 4> digest = hash_factory->digest();
         for (std::size_t i = 0; i < digest.size(); i++)
         {
             build_opts.push_back("-DDIGEST_INDEX_" + std::to_string(i) + "=" + std::to_string(digest[i]));
@@ -36,7 +41,7 @@ namespace HonoursProject
         program_sources.push_back(std::make_pair(inc_hash_const.getData().c_str(), inc_hash_const.getData().size()));
         program_sources.push_back(std::make_pair(inc_hash_func.getData().c_str(), inc_hash_func.getData().size()));
         program_sources.push_back(std::make_pair(inc_hash_comp.getData().c_str(), inc_hash_comp.getData().size()));
-        program_sources.push_back(std::make_pair(hash_func->source().getData().c_str(), hash_func->source().getData().size()));
+        program_sources.push_back(std::make_pair(hash_factory->source().getData().c_str(), hash_factory->source().getData().size()));
 
         std::shared_ptr<Program> prog_hash_crack = std::make_shared<Program>(device);
 
@@ -110,9 +115,9 @@ namespace HonoursProject
         kernel_gen_word_suffix->setParam("css_count", css.size());
         kernel_gen_word_suffix->setParam("msg_prefix_size", msg_prefix_size);
         kernel_gen_word_suffix->setParam("msg_suffix_size", msg_suffix_size);
-        kernel_gen_word_suffix->setParam("mask", hash_func->mask());
-        kernel_gen_word_suffix->setParam("bit14", hash_func->bit14());
-        kernel_gen_word_suffix->setParam("bit15", hash_func->bit15());
+        kernel_gen_word_suffix->setParam("mask", hash_factory->mask());
+        kernel_gen_word_suffix->setParam("bit14", hash_factory->bit14());
+        kernel_gen_word_suffix->setParam("bit15", hash_factory->bit15());
 
         kernel_gen_word_prefix = prog_gen_word->findKernel("generate_word_prefix");
 
@@ -131,11 +136,13 @@ namespace HonoursProject
         kernel_gen_word_prefix->setParam("bit14", 0u);
         kernel_gen_word_prefix->setParam("bit15", 0u);
 
-        Logger::info("Device.#%d: ....: Programs Build Successfuly\n", device->getId());
+        Logger::info("Device.#%d: ....: Compiled Successfully\n", device->getId());
     }
 
     void BruteforceKernelTask::transfer(std::shared_ptr<BaseTask> task)
     {
+        KernelTask::transfer(task);
+
         std::shared_ptr<BruteforceSetupTask> cast_task = std::dynamic_pointer_cast<BruteforceSetupTask>(task);
 
         if (cast_task)

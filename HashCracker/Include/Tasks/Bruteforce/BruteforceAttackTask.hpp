@@ -10,9 +10,11 @@ namespace HonoursProject
     {
     public:
 
+        BruteforceAttackTask(std::shared_ptr<HashCracker> hash_cracker);
+
         virtual ~BruteforceAttackTask();
 
-        virtual std::string run(std::shared_ptr<HashCracker> hash_cracker) override;
+        virtual std::string run() override;
 
         virtual void transfer(std::shared_ptr<BaseTask> task) override;
 

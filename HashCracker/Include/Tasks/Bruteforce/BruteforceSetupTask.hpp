@@ -1,20 +1,20 @@
 #pragma once
 
-#include "Core/HashCracker.hpp"
+#include "Core/Charset.hpp"
 
 #include "Tasks/SetupTask.hpp"
 
 namespace HonoursProject
 {
-    class Charset;
-
     class HASH_CRACKER_PUBLIC BruteforceSetupTask : public SetupTask
     {
     public:
 
+        BruteforceSetupTask(std::vector<std::string> input, std::shared_ptr<HashFactory> hash_factory);
+
         virtual ~BruteforceSetupTask();
 
-        virtual bool run(std::vector<std::string> input) override;
+        virtual bool run() override;
 
         std::vector<Charset> getCharsets();
 
@@ -25,6 +25,10 @@ namespace HonoursProject
         std::uint32_t getMessageSuffix();
 
     protected:
+
+        std::vector<std::string> input;
+        
+        std::shared_ptr<HashFactory> hash_factory;
 
         std::vector<Charset> charsets;
 

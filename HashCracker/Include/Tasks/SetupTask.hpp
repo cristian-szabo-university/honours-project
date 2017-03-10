@@ -4,10 +4,10 @@
 
 namespace HonoursProject
 {
-    class HashFunc;
+    class HashFactory;
     class Kernel;
 
-    class HASH_CRACKER_PUBLIC SetupTask : public TTask<bool, std::vector<std::string>>
+    class HASH_CRACKER_PUBLIC SetupTask : public TTask<bool>
     {
     public:
 
@@ -17,7 +17,11 @@ namespace HonoursProject
 
         std::uint32_t getInnerLoopSize();
 
+        std::vector<std::uint32_t> getMessageDigest();
+
     protected:
+
+        std::vector<std::uint32_t> msg_dgst;
 
         std::uint64_t total_batch_size;
 

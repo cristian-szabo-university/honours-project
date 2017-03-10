@@ -10,14 +10,26 @@
 
 #include "Tasks/KernelTask.hpp"
 #include "Tasks/SetupTask.hpp"
+#include "Tasks/AutotuneTask.hpp"
 
 namespace HonoursProject
 {
+    AttackTask::AttackTask(std::shared_ptr<HashCracker> hash_cracker)
+        : 
+        hash_cracker(hash_cracker),
+        batch_size(0),
+        batch_offset(0),
+        inner_loop_size(0),
+        inner_loop_step(0),
+        inner_loop_pos(0)
+    {
+    }
+
     AttackTask::~AttackTask()
     {
     }
 
-    std::string AttackTask::run(std::shared_ptr<HashCracker> hash_cracker)
+    std::string AttackTask::run()
     {
         std::shared_ptr<Device> device = kernel_hash_crack->getProgram()->getDevice();
         std::vector<KernelPlatform::message_index_t> hash_cracked(1);
@@ -93,20 +105,32 @@ namespace HonoursProject
     void AttackTask::transfer(std::shared_ptr<BaseTask> task)
     {
         {
-            std::shared_ptr<KernelTask> cast_ptr = std::dynamic_pointer_cast<KernelTask>(task);
+            std::shared_ptr<KernelTask> cast_task = std::dynamic_pointer_cast<KernelTask>(task);
 
-            if (cast_ptr)
+            if (cast_task)
             {
-                kernel_hash_crack = cast_ptr->getKernel();
+                kernel_hash_crack = cast_task->getKernel();
             }
         }
 
         {
-            std::shared_ptr<SetupTask> cast_ptr = std::dynamic_pointer_cast<SetupTask>(task);
+            std::shared_ptr<SetupTask> cast_task = std::dynamic_pointer_cast<SetupTask>(task);
 
-            if (cast_ptr)
+            if (cast_task)
             {
-                setInnerLoopSize(cast_ptr->getInnerLoopSize());
+                setInnerLoopSize(cast_task->getInnerLoopSize());
+            }
+        }
+
+        {
+            std::shared_ptr<AutotuneTask> cast_task = std::dynamic_pointer_cast<AutotuneTask>(task);
+
+            if (cast_task)
+            {
+                kernel_hash_crack = cast_task->getKernel();
+
+                setBatchSize(cast_task->getDeviceSpeed());
+                setInnerLoopStep(cast_task->getKernelLoops());
             }
         }
     }
@@ -153,7 +177,7 @@ namespace HonoursProject
         return inner_loop_step;
     }
 
-    double AttackTask::getAvgExecTime()
+    double AttackTask::getExecTime()
     {
         double result;
 
@@ -164,7 +188,7 @@ namespace HonoursProject
         return result;
     }
 
-    double AttackTask::getAvgSpeedTime()
+    double AttackTask::getSpeedTime()
     {
         std::pair<std::uint64_t, std::uint64_t> result;
 
@@ -188,6 +212,11 @@ namespace HonoursProject
     std::shared_ptr<Kernel> AttackTask::getKernel()
     {
         return kernel_hash_crack;
+    }
+
+    std::shared_ptr<Device> AttackTask::getDevice()
+    {
+        return kernel_hash_crack->getProgram()->getDevice();
     }
 
     void AttackTask::preKernelExecute(std::uint32_t inner_loop_left, std::uint32_t inner_loop_pos)

@@ -9,17 +9,23 @@ namespace HonoursProject
     class Device;
     class Kernel;
     class SetupTask;
-    class HashFunc;
+    class HashFactory;
 
-    class HASH_CRACKER_PUBLIC KernelTask : public TTask<void, std::shared_ptr<Device>, std::shared_ptr<HashFunc>, std::vector<std::uint32_t>>
+    class HASH_CRACKER_PUBLIC KernelTask : public TTask<void>
     {
     public:
 
         virtual ~KernelTask();
 
+        virtual void transfer(std::shared_ptr<BaseTask> task) override;
+
         std::shared_ptr<Kernel> getKernel();
 
+        std::vector<std::uint32_t> getMessageDigest();
+
     protected:
+
+        std::vector<std::uint32_t> msg_dgst;
 
         std::shared_ptr<Kernel> kernel_hash_crack;
 

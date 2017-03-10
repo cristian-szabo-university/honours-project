@@ -1,6 +1,6 @@
 #include "Config.hpp"
 
-#include "Tasks/BruteforceAttackTask.hpp"
+#include "Tasks/Bruteforce/BruteforceAttackTask.hpp"
 
 #include "Core/Charset.hpp"
 
@@ -8,15 +8,20 @@
 #include "OpenCL/Device.hpp"
 
 #include "Tasks/KernelTask.hpp"
-#include "Tasks/BruteforceKernelTask.hpp"
+#include "Tasks/Bruteforce/BruteforceKernelTask.hpp"
 
 namespace HonoursProject
 {
+    BruteforceAttackTask::BruteforceAttackTask(std::shared_ptr<HashCracker> hash_cracker)
+        : AttackTask(hash_cracker)
+    {
+    }
+
     BruteforceAttackTask::~BruteforceAttackTask()
     {
     }
 
-    std::string BruteforceAttackTask::run(std::shared_ptr<HashCracker> hash_cracker)
+    std::string BruteforceAttackTask::run()
     {
         std::shared_ptr<Device> device = kernel_hash_crack->getProgram()->getDevice();
 
@@ -24,7 +29,7 @@ namespace HonoursProject
 
         KernelParam::Copy("msg", kernel_gen_word_suffix, kernel_hash_crack, batch_size);
 
-        AttackTask::run(hash_cracker);
+        AttackTask::run();
 
         if (!msg_idx.found)
         {

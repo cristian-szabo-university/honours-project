@@ -8,6 +8,10 @@ namespace HonoursProject
     {
     }
 
+    void NoReturnTask::run()
+    {
+    }
+
     BaseTask::~BaseTask()
     {
     }
@@ -18,5 +22,10 @@ namespace HonoursProject
 
     Task::~Task()
     {
+    }
+
+    std::int32_t Task::run()
+    {
+        return 0;
     }
 }

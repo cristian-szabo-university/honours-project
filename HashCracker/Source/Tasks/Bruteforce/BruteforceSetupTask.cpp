@@ -1,33 +1,36 @@
 #include "Config.hpp"
 
-#include "Tasks/BruteforceSetupTask.hpp"
+#include "Tasks/Bruteforce/BruteforceSetupTask.hpp"
 
 #include "ProgramEntry.hpp"
 
 #include "Core/Logger.hpp"
 #include "Core/Charset.hpp"
-#include "Core/HashFunc.hpp"
+#include "Core/HashFactory.hpp"
 
 #include "OpenCL/Program.hpp"
 #include "OpenCL/Kernel.hpp"
 #include "OpenCL/Device.hpp"
 
-#include "Tasks/BruteforceAttackTask.hpp"
-
 namespace HonoursProject
 {
+    BruteforceSetupTask::BruteforceSetupTask(std::vector<std::string> input, std::shared_ptr<HashFactory> hash_factory)
+        : input(input), hash_factory(hash_factory)
+    {
+    }
+
     BruteforceSetupTask::~BruteforceSetupTask()
     {
     }
 
-    bool BruteforceSetupTask::run(std::vector<std::string> input)
+    bool BruteforceSetupTask::run()
     {
-        if (!input.size())
+        if (input.size() != 2)
         {
             return false;
         }
 
-        charsets = Charset::Create(input.front());
+        charsets = Charset::Create(input[1]);
 
         if (!charsets.size())
         {
@@ -64,8 +67,15 @@ namespace HonoursProject
         total_batch_size /= inner_loop_size;
 
         Logger::info("Attack.Type: ............: Bruteforce\n", message_size);
-        Logger::info("Password.Length: ........: %d characters\n", message_size);
-        Logger::info("Batch.Prefix.Suffix: ....: %d + %d\n", msg_prefix_size, msg_suffix_size);
+        Logger::info("Message.Length: .........: %d + %d = %d characters\n", msg_prefix_size, msg_suffix_size, message_size);
+        Logger::info("Message.Batch: ..........: %ul x %ul\n", inner_loop_size, total_batch_size);
+
+        for (std::size_t digest_pos = 0; digest_pos < 1; digest_pos++)
+        {
+            std::vector<std::uint32_t> result = hash_factory->parse(input[0]);
+
+            std::copy(result.begin(), result.end(), std::back_inserter(msg_dgst));
+        }
 
         return true;
     }

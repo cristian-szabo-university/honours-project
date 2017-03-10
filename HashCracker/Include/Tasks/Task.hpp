@@ -12,7 +12,7 @@ namespace HonoursProject
 
     };
 
-    template<class T, class... A>
+    template<class T>
     class TTask : public BaseTask
     {
     public:
@@ -21,7 +21,7 @@ namespace HonoursProject
         {
         }
 
-        virtual T run(A ...args) = 0;
+        virtual T run() = 0;
 
     };
 
@@ -31,6 +31,8 @@ namespace HonoursProject
 
         virtual ~NoReturnTask();
 
+        virtual void run() override;
+
     };
 
     class HASH_CRACKER_PUBLIC Task : public TTask<std::int32_t>
@@ -38,6 +40,8 @@ namespace HonoursProject
     public:
 
         virtual ~Task();
+
+        virtual std::int32_t run() override;
 
     };
 }

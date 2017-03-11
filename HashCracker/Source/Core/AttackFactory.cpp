@@ -41,8 +41,8 @@ namespace HonoursProject
         return std::make_shared<BruteforceKernelTask>(device, hash_factory);
     }
 
-    std::shared_ptr<AttackTask> Bruteforce::createAttakTask(std::shared_ptr<HashCracker> hash_cracker)
+    std::shared_ptr<AttackTask> Bruteforce::createAttakTask()
     {
-        return std::make_shared<BruteforceAttackTask>(hash_cracker);
+        return std::make_shared<BruteforceAttackTask>();
     }
 }

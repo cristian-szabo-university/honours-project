@@ -7,7 +7,7 @@ namespace HonoursProject
     class KernelTask;
     class AttackTask;
     class Device;
-    class HashCracker;
+    class CrackerTask;
 
     class HASH_CRACKER_PUBLIC AttackFactory
     {
@@ -23,7 +23,7 @@ namespace HonoursProject
 
         virtual std::shared_ptr<KernelTask> createKernelTask(std::shared_ptr<Device> device) = 0;
 
-        virtual std::shared_ptr<AttackTask> createAttakTask(std::shared_ptr<HashCracker> hash_cracker) = 0;
+        virtual std::shared_ptr<AttackTask> createAttakTask() = 0;
 
     protected:
 
@@ -43,7 +43,7 @@ namespace HonoursProject
 
         virtual std::shared_ptr<KernelTask> createKernelTask(std::shared_ptr<Device> device) override;
 
-        virtual std::shared_ptr<AttackTask> createAttakTask(std::shared_ptr<HashCracker> hash_cracker) override;
+        virtual std::shared_ptr<AttackTask> createAttakTask() override;
 
     };
 }

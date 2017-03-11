@@ -11,12 +11,12 @@
 #include "Tasks/KernelTask.hpp"
 #include "Tasks/SetupTask.hpp"
 #include "Tasks/AutotuneTask.hpp"
+#include "Tasks/CrackerTask.hpp"
 
 namespace HonoursProject
 {
-    AttackTask::AttackTask(std::shared_ptr<HashCracker> hash_cracker)
-        : 
-        hash_cracker(hash_cracker),
+    AttackTask::AttackTask()
+        :
         batch_size(0),
         batch_offset(0),
         inner_loop_size(0),
@@ -36,12 +36,13 @@ namespace HonoursProject
 
         for (inner_loop_pos = 0; inner_loop_pos < inner_loop_size; inner_loop_pos += inner_loop_step)
         {
-            while (hash_cracker->getStatus() == HashCracker::Status::Paused)
+            while (cracker_task->getStatus() == CrackerTask::Status::Paused)
             {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
 
-            if (hash_cracker->getStatus() == HashCracker::Status::Cracked)
+            if (cracker_task->getStatus() == CrackerTask::Status::Cracked ||
+                cracker_task->getStatus() == CrackerTask::Status::Aborted)
             {
                 break;
             }
@@ -80,18 +81,16 @@ namespace HonoursProject
                 speed_ms.pop_back();
             }
 
-            kernel_hash_crack->getParam("msg_index", hash_cracked);
-
-            if (hash_cracker->benchmarkEnable())
+            if (cracker_task->benchmarkEnable())
             {
-                hash_cracker->setStatus(HashCracker::Status::Aborted);
-
                 break;
             }
 
+            kernel_hash_crack->getParam("msg_index", hash_cracked);
+
             if (hash_cracked.front().found)
             {
-                hash_cracker->setStatus(HashCracker::Status::Cracked);
+                cracker_task->setStatus(CrackerTask::Status::Cracked);
 
                 break;
             }
@@ -131,6 +130,15 @@ namespace HonoursProject
 
                 setBatchSize(cast_task->getDeviceSpeed());
                 setInnerLoopStep(cast_task->getKernelLoops());
+            }
+        }
+
+        {
+            std::shared_ptr<CrackerTask> cast_task = std::dynamic_pointer_cast<CrackerTask>(task);
+
+            if (cast_task)
+            {
+                cracker_task = cast_task;
             }
         }
     }

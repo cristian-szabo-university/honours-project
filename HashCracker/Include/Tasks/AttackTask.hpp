@@ -6,16 +6,16 @@
 
 namespace HonoursProject
 {
-    class HashCracker;
     class Kernel;
     class Device;
     class KernelTask;
+    class CrackerTask;
 
     class HASH_CRACKER_PUBLIC AttackTask : public TTask<std::string>
     {
     public:
 
-        AttackTask(std::shared_ptr<HashCracker> hash_cracker);
+        AttackTask();
 
         virtual ~AttackTask();
 
@@ -51,7 +51,7 @@ namespace HonoursProject
 
     protected:
 
-        std::shared_ptr<HashCracker> hash_cracker;
+        std::shared_ptr<CrackerTask> cracker_task;
 
         std::shared_ptr<Kernel> kernel_hash_crack;
 

@@ -13,7 +13,7 @@
 namespace HonoursProject
 {
     CrackerTask::CrackerTask(bool benchmark)
-        : status(Status::Idle), total_message_size(0), total_message_progress(0)
+        : status(Status::Idle), total_message_size(0), total_message_progress(0), benchmark(benchmark)
     {
     }
 

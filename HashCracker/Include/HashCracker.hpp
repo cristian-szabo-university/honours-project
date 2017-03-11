@@ -8,7 +8,6 @@
 #include "Core/HashFactory.hpp"
 #include "Core/AttackFactory.hpp"
 #include "Core/HashCracker.hpp"
-#include "Core/AttackDispatch.hpp"
 
 #include "OpenCL/Device.hpp"
 #include "OpenCL/DeviceMemory.hpp"
@@ -19,6 +18,7 @@
 
 #include "Tasks/Task.hpp"
 #include "Tasks/AutotuneTask.hpp"
+#include "Tasks/CrackerTask.hpp"
 #include "Tasks/SetupTask.hpp"
 #include "Tasks/Bruteforce/BruteforceSetupTask.hpp"
 #include "Tasks/KernelTask.hpp"

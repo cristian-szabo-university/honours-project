@@ -119,14 +119,24 @@ int Program::run()
         device_filter = HonoursProject::HashCracker::DeviceFilter::CPU_GPU;
     }
     
-    hash_cracker = std::make_shared<HonoursProject::HashCracker>(device_filter, benchmark);
-    
     HonoursProject::Logger::info("...:::=== Preparing Cracking Process ===:::...\n\n");
 
-    cracked_future = hash_cracker->executeAttack(attack_input, attack_factory);
+    std::shared_ptr<HonoursProject::HashCracker> hash_cracker = std::make_shared<HonoursProject::HashCracker>();
+
+    if (!hash_cracker->create(device_filter))
+    {
+        return 1;
+    }
+    
+    std::shared_ptr<HonoursProject::CrackerTask> cracker_task = hash_cracker->createCrackerTask(attack_input, attack_factory, benchmark);
+
+    cracked_future = std::async(std::launch::async, &HonoursProject::CrackerTask::run, cracker_task.get());
 
     if (benchmark)
     {
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+        cracker_task->setStatus(HonoursProject::CrackerTask::Status::Aborted);
+
         cracked_future.get();
 
         HonoursProject::Logger::info("...:::=== Benchmark Statistics ===:::...\n\n");
@@ -134,14 +144,13 @@ int Program::run()
         std::cout << std::setfill('.') << std::setw(25) << std::left << "Hash.Type";
         std::cout << ": " << hash_factory->type() << std::endl;
 
-        std::shared_ptr<HonoursProject::AttackDispatch> attack_dispatch = hash_cracker->getAttackDispatch();
         double total_device_speed = 0.0, total_device_exec = 0.0;
 
-        for (std::size_t device_pos = 0; device_pos < attack_dispatch->getDeviceNum(); device_pos++)
+        for (std::size_t device_pos = 0; device_pos < cracker_task->getDeviceNum(); device_pos++)
         {
-            std::shared_ptr<HonoursProject::Device> device = attack_dispatch->getDeviceAt(device_pos);
-            double device_speed = attack_dispatch->getDeviceSpeed(device_pos);
-            double device_exec = attack_dispatch->getDeviceExec(device_pos);
+            std::shared_ptr<HonoursProject::Device> device = cracker_task->getDeviceAt(device_pos);
+            double device_speed = cracker_task->getDeviceSpeed(device_pos);
+            double device_exec = cracker_task->getDeviceExec(device_pos);
 
             std::cout << std::setfill('.') << std::setw(25) << std::left << ("Speed.Device.#" + std::to_string(device->getId()));
             std::cout << ": " << format_display_speed(device_speed, device_exec) << std::endl;
@@ -150,7 +159,7 @@ int Program::run()
             total_device_exec += device_exec;
         }
 
-        if (attack_dispatch->getDeviceNum() > 1)
+        if (cracker_task->getDeviceNum() > 1)
         {
             std::cout << std::setfill('.') << std::setw(25) << std::left << "Speed.Device.Total";
             std::cout << ": " << format_display_speed(total_device_speed, total_device_exec) << std::endl;
@@ -161,6 +170,8 @@ int Program::run()
         char user_cmd = 0;
         std::future_status console_status = std::future_status::ready;
         std::future_status cracked_status;
+
+        HonoursProject::Logger::info("...:::=== Cracking Results ===:::...\n\n");
 
         do
         {
@@ -175,11 +186,11 @@ int Program::run()
 
             if (console_status == std::future_status::ready)
             {
-                process_input_command(console_future.get());
+                process_input_command(cracker_task, console_future.get());
             }
-        } while (hash_cracker->getStatus() != HonoursProject::HashCracker::Status::Aborted &&
-            hash_cracker->getStatus() != HonoursProject::HashCracker::Status::Cracked &&
-            hash_cracker->getStatus() != HonoursProject::HashCracker::Status::Idle);
+        } while (cracker_task->getStatus() != HonoursProject::CrackerTask::Status::Aborted &&
+            cracker_task->getStatus() != HonoursProject::CrackerTask::Status::Cracked &&
+            cracker_task->getStatus() != HonoursProject::CrackerTask::Status::Idle);
 
         std::string plain_msg = cracked_future.get();
 
@@ -189,7 +200,7 @@ int Program::run()
         }
         else
         {
-            if (hash_cracker->getStatus() == HonoursProject::HashCracker::Status::Idle)
+            if (cracker_task->getStatus() == HonoursProject::CrackerTask::Status::Idle)
             {
                 std::cout << std::endl << attack_input[0] << ": " << "Not found!" << std::endl;
             }
@@ -199,7 +210,7 @@ int Program::run()
     return 0;
 }
  
-void Program::process_input_command(char cmd)
+void Program::process_input_command(std::shared_ptr<HonoursProject::CrackerTask> cracker_task, char cmd)
 {
     std::stringstream ss;
     ss.imbue(comma_locale);
@@ -210,7 +221,7 @@ void Program::process_input_command(char cmd)
     {
     case 'p':
         {
-            hash_cracker->setStatus(HonoursProject::HashCracker::Status::Paused);
+            cracker_task->setStatus(HonoursProject::CrackerTask::Status::Paused);
 
             std::cout << "Pause cracking process ..." << std::endl;
         }
@@ -218,7 +229,7 @@ void Program::process_input_command(char cmd)
 
     case 'r':
         {
-            hash_cracker->setStatus(HonoursProject::HashCracker::Status::Running);
+            cracker_task->setStatus(HonoursProject::CrackerTask::Status::Running);
 
             std::cout << "Resume cracking process ..." << std::endl;
         }
@@ -226,7 +237,7 @@ void Program::process_input_command(char cmd)
 
     case 'q':
         {
-            hash_cracker->setStatus(HonoursProject::HashCracker::Status::Aborted);
+            cracker_task->setStatus(HonoursProject::CrackerTask::Status::Aborted);
 
             std::cout << "Stopping cracking process ..." << std::endl;
         }
@@ -234,10 +245,8 @@ void Program::process_input_command(char cmd)
 
     case 's':
         {
-            std::shared_ptr<HonoursProject::AttackDispatch> attack_dispatch = hash_cracker->getAttackDispatch();
-
             std::cout << std::setfill('.') << std::setw(25) << std::left << "Cracking.Status";
-            std::cout << ": " << hash_cracker->getStatus() << std::endl;
+            std::cout << ": " << cracker_task->getStatus() << std::endl;
 
             std::cout << std::setfill('.') << std::setw(25) << std::left << "Hash.Target";
             std::cout << ": " << hash_msg << std::endl;
@@ -245,27 +254,27 @@ void Program::process_input_command(char cmd)
             std::cout << std::setfill('.') << std::setw(25) << std::left << "Hash.Type";
             std::cout << ": " << hash_factory->type() << std::endl;
 
-            std::time_t start_time = std::chrono::system_clock::to_time_t(hash_cracker->getTimeStart());
+            std::time_t start_time = std::chrono::system_clock::to_time_t(cracker_task->getTimeStart());
 
             std::cout << std::setfill('.') << std::setw(25) << std::left << "Time.Started";
-            std::cout << ": " << std::put_time(std::gmtime(&start_time), "%D %T") << " " << format_display_time(hash_cracker->getTimeRunning()) << std::endl;
+            std::cout << ": " << std::put_time(std::gmtime(&start_time), "%D %T") << " " << format_display_time(cracker_task->getTimeRunning()) << std::endl;
 
-            std::time_t finish_time = std::chrono::system_clock::to_time_t(hash_cracker->getTimeFinish());
+            std::time_t finish_time = std::chrono::system_clock::to_time_t(cracker_task->getTimeFinish());
 
             std::cout << std::setfill('.') << std::setw(25) << std::left << "Time.Estimated";
-            std::cout << ": " << std::put_time(std::gmtime(&finish_time), "%D %T") << " " << format_display_time(hash_cracker->getTimeEstimated()) << std::endl;
+            std::cout << ": " << std::put_time(std::gmtime(&finish_time), "%D %T") << " " << format_display_time(cracker_task->getTimeEstimated()) << std::endl;
 
             std::cout << std::setfill('.') << std::setw(25) << std::left << "Cracking.Progress";           
-            ss << attack_dispatch->getTotalMessageProgress() << " / " << hash_cracker->getTotalMessageSize();
+            ss << cracker_task->getTotalMessageProgress() << " / " << cracker_task->getTotalMessageSize();
             std::cout << ": " << ss.str() << std::endl; ss.clear();
 
             double total_device_speed = 0.0, total_device_exec = 0.0;
 
-            for (std::size_t device_pos = 0; device_pos < attack_dispatch->getDeviceNum(); device_pos++)
+            for (std::size_t device_pos = 0; device_pos < cracker_task->getDeviceNum(); device_pos++)
             {
-                std::shared_ptr<HonoursProject::Device> device = attack_dispatch->getDeviceAt(device_pos);
-                double device_speed = attack_dispatch->getDeviceSpeed(device_pos);
-                double device_exec = attack_dispatch->getDeviceExec(device_pos);
+                std::shared_ptr<HonoursProject::Device> device = cracker_task->getDeviceAt(device_pos);
+                double device_speed = cracker_task->getDeviceSpeed(device_pos);
+                double device_exec = cracker_task->getDeviceExec(device_pos);
 
                 std::cout << std::setfill('.') << std::setw(25) << std::left << ("Speed.Device.#" + std::to_string(device->getId()));
                 std::cout << ": " << format_display_speed(device_speed, device_exec) << std::endl;
@@ -274,7 +283,7 @@ void Program::process_input_command(char cmd)
                 total_device_exec += device_exec;
             }
 
-            if (attack_dispatch->getDeviceNum() > 1)
+            if (cracker_task->getDeviceNum() > 1)
             {
                 std::cout << std::setfill('.') << std::setw(25) << std::left << "Speed.Device.*";
                 std::cout << ": " << format_display_speed(total_device_speed, total_device_exec) << std::endl;

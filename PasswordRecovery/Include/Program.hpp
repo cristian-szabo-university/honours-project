@@ -39,11 +39,9 @@ private:
 
     std::shared_ptr<HonoursProject::HashFactory> hash_factory;
 
-    std::shared_ptr<HonoursProject::HashCracker> hash_cracker;
-
     std::locale comma_locale;
 
-    void process_input_command(char cmd);
+    void process_input_command(std::shared_ptr<HonoursProject::CrackerTask> cracker_task, char cmd);
 
     std::string format_display_time(std::chrono::seconds tm);
 

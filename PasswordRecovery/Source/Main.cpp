@@ -16,22 +16,22 @@ int main(int argc, char** argv)
 
         error_code = app.run();
     }
-    catch (cl::Error err) 
+    catch (cl::Error& err) 
     {
-         std::cerr 
+        std::cerr 
             << err.what()
             << "("
             << err.err()
             << ")"
             << std::endl;
 
-	error_code = 2;
+	    error_code = 2;
     }
-    catch (std::exception ex)
+    catch (std::runtime_error& ex)
     {
         std::cerr 
-	    << ex.what() 
-	    << std::endl;
+	        << ex.what()
+	        << std::endl;
 
         error_code = 1;
     }

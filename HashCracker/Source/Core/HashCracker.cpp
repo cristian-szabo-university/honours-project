@@ -2,13 +2,13 @@
 
 #include "Core/HashCracker.hpp"
 
-#include "Core/AttackDispatch.hpp"
 #include "Core/Logger.hpp"
 #include "Core/Charset.hpp"
 #include "Core/AttackFactory.hpp"
 
 #include "OpenCL/Device.hpp"
 
+#include "Tasks/CrackerTask.hpp"
 #include "Tasks/KernelTask.hpp"
 #include "Tasks/SetupTask.hpp"
 #include "Tasks/AttackTask.hpp"
@@ -18,9 +18,23 @@
 
 namespace HonoursProject
 {
-    HashCracker::HashCracker(DeviceFilter device_filter, bool benchmark)
-        : benchmark(benchmark), status(HashCracker::Status::Idle)
+    HashCracker::HashCracker() : ready(false)
     {
+        
+    }
+
+    HashCracker::~HashCracker()
+    {
+    }
+
+    bool HashCracker::create(DeviceFilter device_filter)
+    {
+        if (ready)
+        {
+            return false;
+        }
+
+        std::string sep_line(32, '-');
         std::vector<cl::Platform> cl_platforms;
 
         try
@@ -34,10 +48,14 @@ namespace HonoursProject
                 throw ex;
             }
 
-            throw std::runtime_error("Error: No platform found!");
+            Logger::error("Error: No platform found!");
+
+            return false;
         }
 
-        for (auto& cl_platform : cl_platforms)
+        Logger::info("# Find Devices\n\n");
+
+        for (std::size_t platform_id = 0; platform_id < cl_platforms.size(); platform_id++)
         {
             cl_device_type filter;
 
@@ -56,81 +74,80 @@ namespace HonoursProject
                 break;
             }
 
-            std::vector<std::shared_ptr<Device>> platform_devices = Device::Create(cl_platform, filter);
+            cl::Platform cl_platform = cl_platforms.at(platform_id);
+            std::string platform_name = cl_platform.getInfo<CL_PLATFORM_NAME>();
 
-            std::copy(platform_devices.begin(), platform_devices.end(), std::back_inserter(devices));
-        }
-    }
+            std::vector<cl::Device> platform_devices;
 
-    HashCracker::~HashCracker()
-    {
-    }
+            try
+            {
+                cl_platform.getDevices(filter, &platform_devices);
+            }
+            catch (cl::Error& ex)
+            {
+                if (ex.err() != CL_DEVICE_NOT_FOUND)
+                {
+                    throw ex;
+                }
 
-    void HashCracker::setStatus(Status status)
-    {
-        this->status = status;
-    }
+                continue;
+            }
 
-    HashCracker::Status HashCracker::getStatus()
-    {
-        return status;
-    }
+            Logger::info("- Platform #%d: %s\n%s\n", platform_id + 1, platform_name.c_str(), sep_line.c_str());
 
-    bool HashCracker::benchmarkEnable()
-    {
-        return benchmark;
-    }
+            for (std::size_t device_id = 0; device_id < platform_devices.size(); device_id++)
+            {
+                cl::Device cl_device = platform_devices.at(device_id);
 
-    std::shared_ptr<AttackDispatch> HashCracker::getAttackDispatch()
-    {
-        return attack_dispatch;
-    }
+                std::shared_ptr<Device> device = std::make_shared<Device>();
 
-    std::uint64_t HashCracker::getTotalMessageSize()
-    {
-        return total_message_size;
-    }
+                if (!device->create(cl_device))
+                {
+                    continue;
+                }
 
-    std::chrono::system_clock::time_point HashCracker::getTimeStart()
-    {
-        return start_time;
-    }
+                devices.push_back(device);
 
-    std::chrono::seconds HashCracker::getTimeRunning()
-    {
-        std::chrono::system_clock::time_point now_time = std::chrono::system_clock::now();
+                Logger::info(" + Device #%d: ", device->getId());              
+                Logger::info("%s, ", device->getName().c_str()); 
+                Logger::info("%u / %u MB (Maximum / Available), ", 
+                    (std::size_t) device->getMaxMemAllocSize() / 1024 / 1024,
+                    (std::size_t) device->getTotalGlobalMemSize() / 1024 / 1024);
+                Logger::info("%u Compute Units\n", device->getMaxComputeUnits());
+            }
 
-        return std::chrono::duration_cast<std::chrono::seconds>(now_time - start_time);
-    }
-
-    std::chrono::system_clock::time_point HashCracker::getTimeFinish()
-    {
-        return start_time + getTimeEstimated();
-    }
-
-    std::chrono::seconds HashCracker::getTimeEstimated()
-    {
-        double hash_speed_ms = 0.0;
-
-        for (std::size_t device_pos = 0; device_pos < attack_dispatch->getDeviceNum(); device_pos++)
-        {
-            hash_speed_ms += attack_dispatch->getDeviceSpeed(device_pos);
+            Logger::info("\n");
         }
 
-        hash_speed_ms /= attack_dispatch->getDeviceNum();
-
-        double eta_time = total_message_size / hash_speed_ms / 1000.0;
-
-        return std::chrono::seconds(static_cast<std::uint64_t>(eta_time));
-    }
-
-    std::future<std::string> HashCracker::executeAttack(const std::vector<std::string>& input, std::shared_ptr<AttackFactory> attack_factory)
-    {
         if (devices.size() == 0)
         {
-            throw std::runtime_error("Error: No device found to execute attack!");
+            Logger::error("Error: No device found to execute attack!");
         }
 
+        ready = !ready;
+
+        return true;
+    }
+
+    bool HashCracker::destroy()
+    {
+        if (!ready)
+        {
+            return false;
+        }
+
+        devices.clear();
+
+        ready = !ready;
+
+        return true;
+    }
+
+    std::shared_ptr<CrackerTask> HashCracker::createCrackerTask(
+        const std::vector<std::string>& input, 
+        std::shared_ptr<AttackFactory> attack_factory,
+        bool benchmark)
+    {
         Logger::info("# Setup Attack\n\n");
 
         std::shared_ptr<SetupTask> setup_task = attack_factory->createSetupTask(input);
@@ -144,7 +161,9 @@ namespace HonoursProject
 
         Logger::info("\n");
 
-        total_message_size = setup_task->getTotalBatchSize() * setup_task->getInnerLoopSize();
+        std::shared_ptr<CrackerTask> result = std::make_shared<CrackerTask>(benchmark);
+
+        result->transfer(setup_task);
 
         Logger::info("# Kernel Setup\n\n");
 
@@ -168,9 +187,10 @@ namespace HonoursProject
             {
                 future.get();
 
-                std::shared_ptr<AttackTask> attack_task = attack_factory->createAttakTask(shared_from_this());
+                std::shared_ptr<AttackTask> attack_task = attack_factory->createAttakTask();
                 attack_task->transfer(setup_task);
                 attack_task->transfer(kernel_task);
+                attack_task->transfer(result);
 
                 attack_tasks.push_back(attack_task);
             }
@@ -211,6 +231,8 @@ namespace HonoursProject
 
                 std::shared_ptr<AttackTask> attack_task = attack_tasks.at(index);
                 attack_task->transfer(autotune_task);
+
+                result->transfer(attack_task);
             }
             catch (std::exception& ex)
             {
@@ -222,10 +244,6 @@ namespace HonoursProject
 
         Logger::info("\n");
 
-        start_time = std::chrono::system_clock::now();
-
-        attack_dispatch = std::make_shared<AttackDispatch>(shared_from_this(), attack_tasks, setup_task->getTotalBatchSize());
-
-        return std::async(std::launch::async, &AttackDispatch::execute, attack_dispatch.get());
+        return result;
     }
 }

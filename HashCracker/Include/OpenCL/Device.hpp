@@ -69,11 +69,9 @@ namespace HonoursProject
 
         std::uint64_t getUsedLocalMemSize();
 
-        static std::vector<std::shared_ptr<Device>> Create(cl::Platform platform, cl_device_type device_filter, cl_context_properties context_props = 0);
-
     private:
 
-        static std::uint32_t next_buffer_id;
+        static std::uint32_t next_device_id;
 
         bool ready;
 

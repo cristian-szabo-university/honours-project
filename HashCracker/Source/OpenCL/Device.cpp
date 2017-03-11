@@ -10,11 +10,11 @@
 
 namespace HonoursProject
 {
-    std::uint32_t Device::next_buffer_id = 0;
+    std::uint32_t Device::next_device_id = 1;
 
     Device::Device() : ready(false), used_global_mem_size(0), used_local_mem_size(0)
     {
-        id = next_buffer_id++;
+        id = next_device_id++;
     }
 
     Device::~Device()
@@ -308,40 +308,5 @@ namespace HonoursProject
     std::uint64_t Device::getUsedLocalMemSize()
     {
         return used_local_mem_size;
-    }
-
-    std::vector<std::shared_ptr<Device>> Device::Create(cl::Platform platform, cl_device_type device_filter, cl_context_properties context_props)
-    {
-        std::vector<std::shared_ptr<Device>> result;
-
-        std::vector<cl::Device> cl_devices;
-
-        try
-        {
-            platform.getDevices(device_filter, &cl_devices);
-        }
-        catch (cl::Error& ex)
-        {
-            if (ex.err() != CL_DEVICE_NOT_FOUND)
-            {
-                throw ex;
-            }
-
-            return result;
-        }
-
-        for (auto& cl_device : cl_devices)
-        {
-            std::shared_ptr<Device> device = std::make_shared<Device>();
-
-            if (!device->create(cl_device, context_props))
-            {
-                continue;
-            }
-
-            result.push_back(device);
-        }
-
-        return result;
     }
 }

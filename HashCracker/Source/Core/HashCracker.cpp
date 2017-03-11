@@ -93,7 +93,7 @@ namespace HonoursProject
                 continue;
             }
 
-            Logger::info("- Platform #%d: %s\n%s\n", platform_id + 1, platform_name.c_str(), sep_line.c_str());
+            Logger::info("Platform: %s\n%s\n", platform_name.c_str(), sep_line.c_str());
 
             for (std::size_t device_id = 0; device_id < platform_devices.size(); device_id++)
             {

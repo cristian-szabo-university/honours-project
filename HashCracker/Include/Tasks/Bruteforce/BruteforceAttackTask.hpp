@@ -10,7 +10,7 @@ namespace HonoursProject
     {
     public:
 
-        BruteforceAttackTask(std::shared_ptr<HashCracker> hash_cracker);
+        BruteforceAttackTask();
 
         virtual ~BruteforceAttackTask();
 

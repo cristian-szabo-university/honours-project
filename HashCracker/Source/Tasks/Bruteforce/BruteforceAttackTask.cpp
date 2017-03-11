@@ -12,8 +12,7 @@
 
 namespace HonoursProject
 {
-    BruteforceAttackTask::BruteforceAttackTask(std::shared_ptr<HashCracker> hash_cracker)
-        : AttackTask(hash_cracker)
+    BruteforceAttackTask::BruteforceAttackTask()
     {
     }
 

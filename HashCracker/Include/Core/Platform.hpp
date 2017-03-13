@@ -85,12 +85,12 @@ namespace HonoursProject
         {
         protected:
 
-            inline virtual char comma_num_punct::do_thousands_sep() const
+            inline virtual char do_thousands_sep() const
             {
                 return ',';
             }
 
-            inline virtual std::string comma_num_punct::do_grouping() const
+            inline virtual std::string do_grouping() const
             {
                 return "\03";
             }

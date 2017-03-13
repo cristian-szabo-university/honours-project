@@ -19,21 +19,11 @@ Options:
     --version     Show version.
 )";
 
-char comma_num_punct::do_thousands_sep() const
-{
-    return ',';
-}
-
-std::string comma_num_punct::do_grouping() const
-{
-    return "\03";
-}
-
 Program::Program(std::vector<std::string> cli)
 {
-    args = docopt::docopt(USAGE, cli, true, "HashApp 1.0");
+    args = docopt::docopt(USAGE, cli, true, "HashCracker 1.0");
 
-    comma_locale = std::locale(std::locale(), new comma_num_punct());
+    comma_locale = std::locale(std::locale(), new HonoursProject::Platform::comma_num_punct());
 }
 
 int Program::run()
@@ -125,10 +115,15 @@ int Program::run()
 
     if (!hash_cracker->create(device_filter))
     {
-        return 1;
+        return 2;
     }
     
     std::shared_ptr<HonoursProject::CrackerTask> cracker_task = hash_cracker->createCrackerTask(attack_input, attack_factory, benchmark);
+
+    if (!cracker_task)
+    {
+        return 1;
+    }
 
     cracked_future = std::async(std::launch::async, &HonoursProject::CrackerTask::run, cracker_task.get());
 
@@ -264,9 +259,9 @@ void Program::process_input_command(std::shared_ptr<HonoursProject::CrackerTask>
             std::cout << std::setfill('.') << std::setw(25) << std::left << "Time.Estimated";
             std::cout << ": " << std::put_time(std::gmtime(&finish_time), "%D %T") << " " << format_display_time(cracker_task->getTimeEstimated()) << std::endl;
 
-            std::cout << std::setfill('.') << std::setw(25) << std::left << "Cracking.Progress";           
-            ss << cracker_task->getTotalMessageProgress() << " / " << cracker_task->getTotalMessageSize();
-            std::cout << ": " << ss.str() << std::endl; ss.clear();
+            ss << std::setfill('.') << std::setw(25) << std::left << "Cracking.Progress";
+            ss << ": " << cracker_task->getTotalMessageProgress() << " / " << cracker_task->getTotalMessageSize();
+            std::cout << ss.str() << std::endl; ss.clear();
 
             double total_device_speed = 0.0, total_device_exec = 0.0;
 

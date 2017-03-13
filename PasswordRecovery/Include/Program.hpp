@@ -11,16 +11,6 @@ namespace HonoursProject
     class HashCracker;
 }
 
-class comma_num_punct : public std::numpunct<char>
-{
-protected:
-
-    virtual char do_thousands_sep() const;
-
-    virtual std::string do_grouping() const;
-
-};
-
 class Program
 {
 public:

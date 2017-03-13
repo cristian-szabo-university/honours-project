@@ -80,6 +80,22 @@ namespace HonoursProject
                 });
             }
         }
+
+        class comma_num_punct : public std::numpunct<char>
+        {
+        protected:
+
+            inline virtual char comma_num_punct::do_thousands_sep() const
+            {
+                return ',';
+            }
+
+            inline virtual std::string comma_num_punct::do_grouping() const
+            {
+                return "\03";
+            }
+
+        };
     };
 
     namespace KernelPlatform

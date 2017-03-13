@@ -299,9 +299,18 @@ std::string Program::format_display_time(std::chrono::seconds time)
 
     ss << "(";
 
-    if (gmt_tm->tm_year - 70)
+    int year = gmt_tm->tm_year - 70;
+
+    if (year)
     {
-        ss << std::put_time(gmt_tm, "%Y years %j days");
+        if (year < 10)
+        {
+            ss << std::put_time(gmt_tm, "%Y years %j days");
+        }
+        else
+        {
+            ss << "> 10 years";
+        }
     }
     else if (gmt_tm->tm_yday)
     {

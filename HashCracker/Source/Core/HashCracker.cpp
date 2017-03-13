@@ -148,20 +148,33 @@ namespace HonoursProject
         std::shared_ptr<AttackFactory> attack_factory,
         bool benchmark)
     {
+        std::shared_ptr<CrackerTask> result;
+
         Logger::info("# Setup Attack\n\n");
 
         std::shared_ptr<SetupTask> setup_task = attack_factory->createSetupTask(input);
 
         auto future = std::async(std::launch::async, &SetupTask::run, setup_task.get());
 
-        if (!future.get())
+        bool complete = false;
+
+        try
         {
-            throw std::runtime_error("Error:: Failed to setup attack!");
+            complete = future.get();
+        }
+        catch (std::exception& ex)
+        {
+            Logger::error("Error: Failed to setup attack! %s", ex.what());
         }
 
         Logger::info("\n");
 
-        std::shared_ptr<CrackerTask> result = std::make_shared<CrackerTask>(benchmark);
+        if (!complete)
+        {
+            return result;
+        }
+
+        result = std::make_shared<CrackerTask>(benchmark);
 
         result->transfer(setup_task);
 

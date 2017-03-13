@@ -17,6 +17,7 @@ namespace HonoursProject
     BruteforceSetupTask::BruteforceSetupTask(std::vector<std::string> input, std::shared_ptr<HashFactory> hash_factory)
         : input(input), hash_factory(hash_factory)
     {
+        comma_locale = std::locale(std::locale(), new HonoursProject::Platform::comma_num_punct());
     }
 
     BruteforceSetupTask::~BruteforceSetupTask()
@@ -25,6 +26,9 @@ namespace HonoursProject
 
     bool BruteforceSetupTask::run()
     {
+        std::stringstream ss;
+        ss.imbue(comma_locale);
+
         if (input.size() != 2)
         {
             return false;
@@ -34,9 +38,7 @@ namespace HonoursProject
 
         if (!charsets.size())
         {
-            Logger::error("Error: Invalid charset!\n");
-
-            return false;
+            throw std::runtime_error("Invalid charset!\n");
         }
 
         total_batch_size = Charset::GetTotalMsgNum(charsets);
@@ -45,11 +47,11 @@ namespace HonoursProject
         {
             msg_prefix_size = 1;
         }
-        else if (charsets.size() < 8)
+        else if (charsets.size() < 7)
         {
             msg_prefix_size = 2;
         }
-        else if (charsets.size() < 10)
+        else if (charsets.size() < 8)
         {
             msg_prefix_size = 3;
         }
@@ -68,7 +70,9 @@ namespace HonoursProject
 
         Logger::info("Attack.Type: ............: Bruteforce\n", message_size);
         Logger::info("Message.Length: .........: %d + %d = %d characters\n", msg_prefix_size, msg_suffix_size, message_size);
-        Logger::info("Message.Batch: ..........: %ul x %ul\n", inner_loop_size, total_batch_size);
+
+        ss << inner_loop_size << " x " << total_batch_size;
+        Logger::info("Message.Batch: ..........: %s\n", ss.str().c_str()); ss.clear();
 
         for (std::size_t digest_pos = 0; digest_pos < 1; digest_pos++)
         {

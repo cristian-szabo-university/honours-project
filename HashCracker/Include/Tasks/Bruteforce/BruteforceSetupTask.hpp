@@ -38,5 +38,7 @@ namespace HonoursProject
         
         std::uint32_t msg_suffix_size;
 
+        std::locale comma_locale;
+
     };
 }

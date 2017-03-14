@@ -31,8 +31,6 @@ namespace HonoursProject
 
         virtual void transfer(std::shared_ptr<BaseTask> task) override;
 
-        bool benchmarkEnable();
-
         void setStatus(Status status);
 
         Status getStatus();

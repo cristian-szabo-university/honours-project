@@ -120,11 +120,6 @@ namespace HonoursProject
         }
     }
 
-    bool CrackerTask::benchmarkEnable()
-    {
-        return benchmark;
-    }
-
     void CrackerTask::setStatus(Status status)
     {
         this->status = status;

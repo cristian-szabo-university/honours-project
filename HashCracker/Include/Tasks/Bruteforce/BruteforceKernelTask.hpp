@@ -24,7 +24,7 @@ namespace HonoursProject
 
         virtual void transfer(std::shared_ptr<BaseTask> task) override;
 
-        std::vector<Charset> getCharsets();
+        MessageMask getMessageMask();
 
         std::shared_ptr<Kernel> getGenWordPrefixKernel();
 
@@ -36,7 +36,7 @@ namespace HonoursProject
         
         std::shared_ptr<HashFactory> hash_factory;
 
-        std::vector<Charset> charsets;
+        MessageMask message_mask;
 
         std::uint32_t message_size;
 

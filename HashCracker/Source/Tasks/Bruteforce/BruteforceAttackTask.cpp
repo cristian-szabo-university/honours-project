@@ -2,7 +2,7 @@
 
 #include "Tasks/Bruteforce/BruteforceAttackTask.hpp"
 
-#include "Core/Charset.hpp"
+#include "Core/MessageMask.hpp"
 
 #include "OpenCL/Kernel.hpp"
 #include "OpenCL/Device.hpp"
@@ -41,7 +41,7 @@ namespace HonoursProject
         hash_rank *= inner_loop_size;
         hash_rank += inner_loop_pos + msg_idx.inner_loop_pos;
 
-        return Charset::GetMsgFromIndex(hash_rank, charsets);
+        return message_mask.createMesssage(hash_rank);
     }
 
     void BruteforceAttackTask::transfer(std::shared_ptr<BaseTask> task)
@@ -52,7 +52,7 @@ namespace HonoursProject
 
         if (cast_task)
         {
-            charsets = cast_task->getCharsets();
+            message_mask = cast_task->getMessageMask();
 
             kernel_gen_word_prefix = cast_task->getGenWordPrefixKernel();
 

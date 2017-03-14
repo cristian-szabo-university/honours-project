@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Charset.hpp"
+#include "Core/MessageMask.hpp"
 
 #include "Tasks/SetupTask.hpp"
 
@@ -16,7 +16,7 @@ namespace HonoursProject
 
         virtual bool run() override;
 
-        std::vector<Charset> getCharsets();
+        MessageMask getMessageMask();
 
         std::uint32_t getMessageSize();
 
@@ -30,7 +30,7 @@ namespace HonoursProject
         
         std::shared_ptr<HashFactory> hash_factory;
 
-        std::vector<Charset> charsets;
+        MessageMask message_mask;
 
         std::uint32_t message_size;
         

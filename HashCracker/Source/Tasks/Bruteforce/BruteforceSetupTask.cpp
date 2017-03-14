@@ -5,7 +5,7 @@
 #include "ProgramEntry.hpp"
 
 #include "Core/Logger.hpp"
-#include "Core/Charset.hpp"
+#include "Core/MessageMask.hpp"
 #include "Core/HashFactory.hpp"
 
 #include "OpenCL/Program.hpp"
@@ -34,24 +34,22 @@ namespace HonoursProject
             return false;
         }
 
-        charsets = Charset::Create(input[1]);
-
-        if (!charsets.size())
+        if (!message_mask.create(input[1]))
         {
-            throw std::runtime_error("Invalid charset!\n");
+            return false;
         }
 
-        total_batch_size = Charset::GetTotalMsgNum(charsets);
+        total_batch_size = message_mask.getSize();
 
-        if (charsets.size() < 6)
+        if (message_mask.getLength() < 6)
         {
             msg_prefix_size = 1;
         }
-        else if (charsets.size() < 7)
+        else if (message_mask.getLength() < 7)
         {
             msg_prefix_size = 2;
         }
-        else if (charsets.size() < 8)
+        else if (message_mask.getLength() < 8)
         {
             msg_prefix_size = 3;
         }
@@ -60,11 +58,11 @@ namespace HonoursProject
             msg_prefix_size = 4;
         }
 
-        message_size = charsets.size();
+        message_size = message_mask.getLength();
 
         msg_suffix_size = message_size - msg_prefix_size;
 
-        inner_loop_size = static_cast<uint32_t>(Charset::GetTotalMsgNum(charsets, msg_prefix_size));
+        inner_loop_size = static_cast<uint32_t>(message_mask.getSize(msg_prefix_size));
 
         total_batch_size /= inner_loop_size;
 
@@ -84,9 +82,9 @@ namespace HonoursProject
         return true;
     }
 
-    std::vector<Charset> BruteforceSetupTask::getCharsets()
+    MessageMask BruteforceSetupTask::getMessageMask()
     {
-        return charsets;
+        return message_mask;
     }
     std::uint32_t BruteforceSetupTask::getMessageSize()
     {

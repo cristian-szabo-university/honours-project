@@ -3,7 +3,7 @@
 #include "Core/HashCracker.hpp"
 
 #include "Core/Logger.hpp"
-#include "Core/Charset.hpp"
+#include "Core/MessageMask.hpp"
 #include "Core/AttackFactory.hpp"
 
 #include "OpenCL/Device.hpp"

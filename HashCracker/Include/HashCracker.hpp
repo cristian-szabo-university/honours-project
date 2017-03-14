@@ -3,7 +3,7 @@
 #include "Config.hpp"
 
 #include "Core/Platform.hpp"
-#include "Core/Charset.hpp"
+#include "Core/MessageMask.hpp"
 #include "Core/Logger.hpp"
 #include "Core/HashFactory.hpp"
 #include "Core/AttackFactory.hpp"

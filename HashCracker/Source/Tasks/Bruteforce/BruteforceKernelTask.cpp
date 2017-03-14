@@ -1,6 +1,6 @@
 #include "Config.hpp"
 
-#include "Core/Charset.hpp"
+#include "Core/MessageMask.hpp"
 #include "Core/HashFactory.hpp"
 #include "Core/Logger.hpp"
 
@@ -91,13 +91,14 @@ namespace HonoursProject
 
         std::vector<KernelPlatform::charset_t> css;
 
-        for (auto& charset : charsets)
+        for (std::size_t c = 0; c < message_mask.getLength(); c++)
         {
             KernelPlatform::charset_t cs;
             memset(&cs, 0, sizeof(KernelPlatform::charset_t));
 
-            cs.size = charset.getSize();
-            std::copy(charset.getData(), charset.getData() + charset.getSize(), cs.data);
+            MessageMask::Charset charset = message_mask.getCharset(c);
+            cs.size = charset.size();
+            std::copy(charset.begin(), charset.end(), cs.data);
 
             css.push_back(cs);
         }
@@ -147,7 +148,7 @@ namespace HonoursProject
 
         if (cast_task)
         {
-            charsets = cast_task->getCharsets();
+            message_mask = cast_task->getMessageMask();
 
             message_size = cast_task->getMessageSize();
 
@@ -157,9 +158,9 @@ namespace HonoursProject
         }
     }
 
-    std::vector<Charset> BruteforceKernelTask::getCharsets()
+    MessageMask BruteforceKernelTask::getMessageMask()
     {
-        return charsets;
+        return message_mask;
     }
 
     std::shared_ptr<Kernel> BruteforceKernelTask::getGenWordPrefixKernel()

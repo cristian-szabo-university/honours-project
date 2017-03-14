@@ -1,11 +1,10 @@
 #pragma once
 
+#include "Core/MessageMask.hpp"
 #include "Tasks/AttackTask.hpp"
 
 namespace HonoursProject
 {
-    class Charset;
-
     class HASH_CRACKER_PUBLIC BruteforceAttackTask : public AttackTask
     {
     public:
@@ -26,7 +25,7 @@ namespace HonoursProject
 
     private:
 
-        std::vector<Charset> charsets;
+        MessageMask message_mask;
 
         std::shared_ptr<Kernel> kernel_gen_word_prefix;
 

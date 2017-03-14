@@ -6,16 +6,6 @@ namespace HonoursProject
     {
     public:
 
-        static const Charset lowerCaseLetters;
-
-        static const Charset upperCaseLetters;
-
-        static const Charset specialLetters;
-
-        static const Charset digitalLetters;
-
-        static const Charset allLetters;
-
         Charset(char id);
 
         Charset(std::initializer_list<char> cs);

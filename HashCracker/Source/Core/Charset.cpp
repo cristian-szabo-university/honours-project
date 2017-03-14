@@ -4,46 +4,49 @@
 
 namespace HonoursProject
 {
-    const Charset Charset::lowerCaseLetters = Charset('l');
-
-    const Charset Charset::upperCaseLetters = Charset('u');
-
-    const Charset Charset::digitalLetters = Charset('d');
-
-    const Charset Charset::specialLetters = Charset('s');
-
-    const Charset Charset::allLetters = Charset('a');
-
     Charset::Charset(char id)
     {
         char chr;
-        std::size_t pos;
 
         switch (id)
         {
         case 'l':
-            for (pos = 0, chr = 'a'; chr <= 'z'; chr++)
+            for (chr = 'a'; chr <= 'z'; chr++)
             {
                 data.push_back(chr);
             }
             break;
 
         case 'u':
-            for (pos = 0, chr = 'A'; chr <= 'Z'; chr++)
+            for (chr = 'A'; chr <= 'Z'; chr++)
+            {
+                data.push_back(chr);
+            }
+            break;
+
+        case 'o' :
+            for (chr = 'A'; chr <= 'z'; chr++)
             {
                 data.push_back(chr);
             }
             break;
 
         case 'd':
-            for (pos = 0, chr = '0'; chr <= '9'; chr++)
+            for (chr = '0'; chr <= '9'; chr++)
+            {
+                data.push_back(chr);
+            }
+            break;
+
+        case 'e':
+            for (chr = '0'; chr <= 'z'; chr++)
             {
                 data.push_back(chr);
             }
             break;
 
         case 's':
-            for (pos = 0, chr = 0x20; chr <= 0x7e; chr++)
+            for (chr = 0x20; chr <= 0x7e; chr++)
             {
                 if (chr >= '0' && chr < 'z')
                 {
@@ -55,14 +58,14 @@ namespace HonoursProject
             break;
 
         case 'a':
-            for (pos = 0, chr = 0x20; chr <= 0x7e; chr++)
+            for (chr = 0x20; chr <= 0x7e; chr++)
             {
                 data.push_back(chr);
             }
             break;
 
         default:
-            break;
+            throw std::runtime_error("Invalid charset id!");
         }
     }
 
@@ -106,32 +109,9 @@ namespace HonoursProject
 
         for (std::size_t pos = 0; pos < mask.size(); pos++)
         {
-            char p0 = mask[pos];
-
-            if (p0 == '?')
+            if (mask[pos] == '?')
             {
-                pos++;
-
-                char p1 = mask[pos];
-
-                switch (p1)
-                {
-                case 'l':
-                    result.push_back(HonoursProject::Charset::lowerCaseLetters);
-                    break;
-                case 'u':
-                    result.push_back(HonoursProject::Charset::upperCaseLetters);
-                    break;
-                case 'd':
-                    result.push_back(HonoursProject::Charset::digitalLetters);
-                    break;
-                case 's':
-                    result.push_back(HonoursProject::Charset::specialLetters);
-                    break;
-                case 'a':
-                    result.push_back(HonoursProject::Charset::allLetters);
-                    break;
-                }
+                result.push_back(mask[++pos]);
             }
         }
 

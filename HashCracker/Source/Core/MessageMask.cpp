@@ -23,9 +23,16 @@ namespace HonoursProject
             }
         }
 
+        this->mask = mask;
+
         ready = !ready;
 
         return true;
+    }
+
+    std::string MessageMask::toString() const
+    {
+        return mask;
     }
 
     bool MessageMask::destroy()
@@ -36,6 +43,8 @@ namespace HonoursProject
         }
 
         data.clear();
+
+        mask.clear();
 
         ready = !ready;
 
@@ -88,6 +97,13 @@ namespace HonoursProject
         return result;
     }
 
+    std::ostream& operator<<(std::ostream & os, const MessageMask& message)
+    {
+        os << message.toString();
+
+        return os;
+    }
+
     MessageMask::Charset MessageMask::createCharset(char tag)
     {
         char chr;
@@ -110,9 +126,16 @@ namespace HonoursProject
             break;
 
         case 'o':
-            for (chr = 'A'; chr <= 'z'; chr++)
             {
-                result.push_back(chr);
+                for (chr = 'A'; chr <= 'Z'; chr++)
+                {
+                    result.push_back(chr);
+                }
+
+                for (chr = 'a'; chr <= 'z'; chr++)
+                {
+                    result.push_back(chr);
+                }
             }
             break;
 
@@ -124,16 +147,56 @@ namespace HonoursProject
             break;
 
         case 'e':
-            for (chr = '0'; chr <= 'z'; chr++)
             {
-                result.push_back(chr);
+                for (chr = 'a'; chr <= 'z'; chr++)
+                {
+                    result.push_back(chr);
+                }
+
+                for (chr = 'A'; chr <= 'Z'; chr++)
+                {
+                    result.push_back(chr);
+                }
+
+                for (chr = '0'; chr <= '9'; chr++)
+                {
+                    result.push_back(chr);
+                }
+            }
+            break;
+
+        case 'f':
+            {
+                for (chr = '0'; chr <= '9'; chr++)
+                {
+                    result.push_back(chr);
+                }
+
+                for (chr = 'a'; chr <= 'z'; chr++)
+                {
+                    result.push_back(chr);
+                }
             }
             break;
 
         case 's':
             for (chr = 0x20; chr <= 0x7e; chr++)
             {
-                if (chr >= '0' && chr < 'z')
+                if ((chr >= '0' && chr <= '9') ||
+                    chr >= 'A' && chr <= 'Z' ||
+                    chr >= 'a' && chr <= 'z')
+                {
+                    continue;
+                }
+
+                result.push_back(chr);
+            }
+            break;
+
+        case 't':
+            for (chr = 0x20; chr <= 0x7e; chr++)
+            {
+                if (chr >= '0' && chr <= '9')
                 {
                     continue;
                 }

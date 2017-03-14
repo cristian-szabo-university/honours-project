@@ -43,6 +43,8 @@ namespace HonoursProject
 
         double getSpeedTime();
 
+        double getMaxSpeedTime();
+
         void setKernel(std::shared_ptr<Kernel> kernel);
 
         std::shared_ptr<Kernel> getKernel();

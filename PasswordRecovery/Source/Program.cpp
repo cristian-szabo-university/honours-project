@@ -75,7 +75,7 @@ int Program::run()
 
         if (args["bruteforce"].asBool())
         {
-            attack_input.push_back("?l?l?l?l?l");
+            attack_input.push_back("?a?l?l?l?l?l");
         }
         else if (args["dictionary"].asBool())
         {
@@ -141,7 +141,7 @@ int Program::run()
         for (std::size_t device_pos = 0; device_pos < cracker_task->getDeviceNum(); device_pos++)
         {
             std::shared_ptr<HonoursProject::Device> device = cracker_task->getDeviceAt(device_pos);
-            double device_speed = cracker_task->getDeviceSpeed(device_pos);
+            double device_speed = cracker_task->getDeviceMaxSpeed(device_pos);
 
             std::cout << std::setfill('.') << std::setw(25) << std::left << ("Speed.Device.#" + std::to_string(device->getId()));
             std::cout << ": " << format_display_speed(device_speed, 0.0) << std::endl;

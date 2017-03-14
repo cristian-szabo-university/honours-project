@@ -186,6 +186,11 @@ namespace HonoursProject
         return attack_tasks.at(device_pos)->getSpeedTime();
     }
 
+    double CrackerTask::getDeviceMaxSpeed(std::size_t device_pos)
+    {
+        return attack_tasks.at(device_pos)->getMaxSpeedTime();
+    }
+
     double CrackerTask::getDeviceExec(std::size_t device_pos)
     {
         return attack_tasks.at(device_pos)->getExecTime();

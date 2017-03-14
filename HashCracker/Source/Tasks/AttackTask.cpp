@@ -201,10 +201,21 @@ namespace HonoursProject
             return std::make_pair(a.first + b.first, a.second + b.second);
         });
 
-        double speed_cnt = (double) result.first / speed_ms.size();
-        double speed_tm = (double) result.second / speed_ms.size();
+        double speed_cnt = ((double) result.first) / speed_ms.size();
+        double speed_tm = ((double) result.second) / speed_ms.size();
 
         return (speed_cnt / speed_tm);
+    }
+
+    double AttackTask::getMaxSpeedTime()
+    {
+        auto result = std::max_element(speed_ms.begin(), speed_ms.end(),
+            [](std::pair<std::uint64_t, std::uint64_t> a, std::pair<std::uint64_t, std::uint64_t> b)
+        {
+            return (a.second < b.second);
+        });
+
+        return ((double)(result->first) / result->second);
     }
 
     void AttackTask::setKernel(std::shared_ptr<Kernel> kernel)

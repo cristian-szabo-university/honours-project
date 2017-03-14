@@ -53,6 +53,8 @@ namespace HonoursProject
 
         double getDeviceSpeed(std::size_t device_pos);
 
+        double getDeviceMaxSpeed(std::size_t device_pos);
+
         double getDeviceExec(std::size_t device_pos);
 
     private:

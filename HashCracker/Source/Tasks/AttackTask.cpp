@@ -81,11 +81,6 @@ namespace HonoursProject
                 speed_ms.pop_back();
             }
 
-            if (cracker_task->benchmarkEnable())
-            {
-                break;
-            }
-
             kernel_hash_crack->getParam("msg_index", hash_cracked);
 
             if (hash_cracked.front().found)

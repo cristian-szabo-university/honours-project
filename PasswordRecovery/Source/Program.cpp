@@ -75,7 +75,7 @@ int Program::run()
 
         if (args["bruteforce"].asBool())
         {
-            attack_input.push_back("?a?a?a?a?a?a?a?a");
+            attack_input.push_back("?l?l?l?l?l");
         }
         else if (args["dictionary"].asBool())
         {
@@ -129,9 +129,6 @@ int Program::run()
 
     if (benchmark)
     {
-        std::this_thread::sleep_for(std::chrono::seconds(5));
-        cracker_task->setStatus(HonoursProject::CrackerTask::Status::Aborted);
-
         cracked_future.get();
 
         HonoursProject::Logger::info("...:::=== Benchmark Statistics ===:::...\n\n");
@@ -139,26 +136,57 @@ int Program::run()
         std::cout << std::setfill('.') << std::setw(25) << std::left << "Hash.Type";
         std::cout << ": " << hash_factory->type() << std::endl;
 
-        double total_device_speed = 0.0, total_device_exec = 0.0;
+        double total_device_speed = 0.0;
 
         for (std::size_t device_pos = 0; device_pos < cracker_task->getDeviceNum(); device_pos++)
         {
             std::shared_ptr<HonoursProject::Device> device = cracker_task->getDeviceAt(device_pos);
             double device_speed = cracker_task->getDeviceSpeed(device_pos);
-            double device_exec = cracker_task->getDeviceExec(device_pos);
 
             std::cout << std::setfill('.') << std::setw(25) << std::left << ("Speed.Device.#" + std::to_string(device->getId()));
-            std::cout << ": " << format_display_speed(device_speed, device_exec) << std::endl;
+            std::cout << ": " << format_display_speed(device_speed, 0.0) << std::endl;
 
             total_device_speed += device_speed;
-            total_device_exec += device_exec;
         }
 
         if (cracker_task->getDeviceNum() > 1)
         {
             std::cout << std::setfill('.') << std::setw(25) << std::left << "Speed.Device.Total";
-            std::cout << ": " << format_display_speed(total_device_speed, total_device_exec) << std::endl;
+            std::cout << ": " << format_display_speed(total_device_speed, 0.0) << std::endl;
         }
+
+        std::cout << std::endl;
+
+        std::cout << "|";
+        std::cout << std::setfill(' ') << std::setw(25) << std::left << "Mask / Length";
+
+        for (std::size_t length = 5; length <= 12; length++)
+        {
+            std::cout << "|";
+            std::cout << std::setfill(' ') << std::setw(10) << std::left << std::to_string(length);
+        }
+
+        std::cout << "|" << std::endl;
+
+        std::cout << "|";
+        std::cout << std::setfill('-') << std::setw(114) << std::right << "|" << std::endl;
+
+        std::cout << format_benchmark_test("D", total_device_speed, 8, "?d?d?d?d", "?d") << std::endl;
+        std::cout << format_benchmark_test("L + 4 x D", total_device_speed, 8, "?d?d?d?d", "?l") << std::endl;
+        std::cout << format_benchmark_test("L & U & S + 4 x D", total_device_speed, 8, "?d?d?d?d", "?t") << std::endl;
+        std::cout << format_benchmark_test("L & U + 2 x D + 1 x S", total_device_speed, 8, "?o?d?d?s", "?o") << std::endl;
+        std::cout << format_benchmark_test("L", total_device_speed, 8, "?l?l?l?l", "?l") << std::endl;
+
+        std::cout << format_benchmark_test("L & D + 1 x S", total_device_speed, 8, "?f?f?f?s", "?f") << std::endl;
+        std::cout << format_benchmark_test("L & U + 2 x S", total_device_speed, 8, "?o?o?s?s", "?o") << std::endl;
+        std::cout << format_benchmark_test("L & U", total_device_speed, 8, "?o?o?o?o", "?o") << std::endl;
+        std::cout << format_benchmark_test("L & U & D", total_device_speed, 8, "?e?e?e?e", "?e") << std::endl;
+        std::cout << format_benchmark_test("L & U & D & S", total_device_speed, 8, "?a?a?a?a", "?a") << std::endl;
+
+        std::cout << "|";
+        std::cout << std::setfill('-') << std::setw(114) << std::right << "|" << std::endl;
+
+        std::cout << std::endl;
     }
     else
     {
@@ -252,12 +280,12 @@ void Program::process_input_command(std::shared_ptr<HonoursProject::CrackerTask>
             std::time_t start_time = std::chrono::system_clock::to_time_t(cracker_task->getTimeStart());
 
             std::cout << std::setfill('.') << std::setw(25) << std::left << "Time.Started";
-            std::cout << ": " << std::put_time(std::gmtime(&start_time), "%D %T") << " " << format_display_time(cracker_task->getTimeRunning()) << std::endl;
+            std::cout << ": " << std::put_time(std::gmtime(&start_time), "%D %T") << " (" << format_display_time(cracker_task->getTimeRunning()) << ")" << std::endl;
 
             std::time_t finish_time = std::chrono::system_clock::to_time_t(cracker_task->getTimeFinish());
 
             std::cout << std::setfill('.') << std::setw(25) << std::left << "Time.Estimated";
-            std::cout << ": " << std::put_time(std::gmtime(&finish_time), "%D %T") << " " << format_display_time(cracker_task->getTimeEstimated()) << std::endl;
+            std::cout << ": " << std::put_time(std::gmtime(&finish_time), "%D %T") << " (" << format_display_time(cracker_task->getTimeEstimated()) << ")" << std::endl;
 
             ss << std::setfill('.') << std::setw(25) << std::left << "Cracking.Progress";
             ss << ": " << cracker_task->getTotalMessageProgress() << " / " << cracker_task->getTotalMessageSize();
@@ -290,46 +318,76 @@ void Program::process_input_command(std::shared_ptr<HonoursProject::CrackerTask>
     std::cout << std::endl;
 }
 
-std::string Program::format_display_time(std::chrono::seconds time)
+std::string Program::format_display_time(std::chrono::seconds time, bool short_name)
 {
+    static std::vector<std::string> time_name = { "years", "months", "weeks", "days", "hours", "mins", "secs"};
+
     std::stringstream ss;
 
-    std::time_t tt = time.count();
-    tm* gmt_tm = std::gmtime(&tt);
+    using namespace std::chrono;
+    using days = duration<std::uint64_t, std::ratio<3600 * 24>>;
+    using weeks = duration<std::uint64_t, std::ratio<3600 * 24 * 7>>;
+    using months = duration<std::uint64_t, std::ratio<3600 * 24 * 7 * 4>>;
+    using years = duration<std::uint64_t, std::ratio<3600 * 24 * 7 * 4 * 13>>;
 
-    ss << "(";
+    auto year = duration_cast<years>(time);
+    auto month = duration_cast<months>(time -= year);
+    auto week = duration_cast<weeks>(time -= month);
+    auto day = duration_cast<days>(time -= week);
+    auto hour = duration_cast<hours>(time -= day);
+    auto minute = duration_cast<minutes>(time -= hour);
+    auto second = duration_cast<seconds>(time -= minute);
 
-    int year = gmt_tm->tm_year - 70;
+    std::string year_str = short_name ? std::string(1, time_name[0][0]) : time_name[0];
+    std::string month_str = short_name ? std::string(1, time_name[1][0]) : time_name[1];
+    std::string week_str = short_name ? std::string(1, time_name[2][0]) : time_name[2];
+    std::string day_str = short_name ? std::string(1, time_name[3][0]) : time_name[3];
+    std::string hour_str = short_name ? std::string(1, time_name[4][0]) : time_name[4];
+    std::string minute_str = short_name ? std::string(1, time_name[5][0]) : time_name[5];
+    std::string second_str = short_name ? std::string(1, time_name[6][0]) : time_name[6];
 
-    if (year)
+    if (year.count())
     {
-        if (year < 10)
+        if (year.count() < 10)
         {
-            ss << std::put_time(gmt_tm, "%Y years %j days");
+            ss << year.count() << year_str << " " << month.count() << month_str;
         }
         else
         {
-            ss << "> 10 years";
+            ss << "> 10" + year_str;
         }
     }
-    else if (gmt_tm->tm_yday)
+    else if (month.count())
     {
-        ss << std::put_time(gmt_tm, "%j days %H hours");
+        ss << month.count() << month_str << " " << week.count() << week_str;
     }
-    else if (gmt_tm->tm_hour)
+    else if (week.count())
     {
-        ss << std::put_time(gmt_tm, "%H hours %M mins");
+        ss << week.count() << week_str << " " << day.count() << day_str;
     }
-    else if (gmt_tm->tm_min)
+    else if (day.count())
     {
-        ss << std::put_time(gmt_tm, "%M mins %S secs");
+        ss << day.count() << day_str << " " << hour.count() << hour_str;
+    }
+    else if (hour.count())
+    {
+        ss << hour.count() << hour_str << " " << minute.count() << minute_str;
+    }
+    else if (minute.count())
+    {
+        ss << minute.count() << minute_str << " " << second.count() << second_str;
     }
     else
     {
-        ss << std::put_time(gmt_tm, "%S secs");
+        if (second.count())
+        {
+            ss << second.count() << second_str;
+        }
+        else
+        {
+            ss << "< 1" + second_str;
+        }
     }
-
-    ss << ")";
 
     return ss.str();
 }
@@ -361,7 +419,38 @@ std::string Program::format_display_speed(double speed_time, double exec_time)
         ss << std::setprecision(2) << std::fixed << speed_time << "H/s ";
     }
 
-    ss << "(" << std::setprecision(2) << std::fixed << exec_time << " ms)";
+    if (exec_time > std::numeric_limits<double>::epsilon())
+    {
+        ss << "(" << std::setprecision(2) << std::fixed << exec_time << " ms)";
+    }
+
+    return ss.str();
+}
+
+std::string Program::format_benchmark_test(const std::string& name, double device_speed, std::size_t size, const std::string& start_mask, const std::string& append_mask)
+{
+    std::string mask;
+    std::stringstream ss;
+    HonoursProject::MessageMask message_mask;
+
+    ss << "|";
+    ss << std::setfill(' ') << std::setw(25) << std::left << name;
+
+    mask = start_mask;
+    for (std::size_t length = 0; length < size; length++)
+    {
+        mask.insert(0, append_mask);
+        message_mask.create(mask);
+
+        std::chrono::seconds eta_time(static_cast<std::uint64_t>(message_mask.getSize() / device_speed / 1000.0));
+
+        ss << "|";
+        ss << std::setfill(' ') << std::setw(10) << std::left << format_display_time(eta_time, true);
+
+        message_mask.destroy();
+    }
+
+    ss << "|";
 
     return ss.str();
 }

@@ -1,3 +1,13 @@
+/**
+    KernelTask.hpp
+
+    Project Name: HashCracker
+
+    Copyright (c) 2017 University of the West of Scotland
+    
+    Authors: Ioan-Cristian Szabo <cristian.szabo@outlook.com>
+*/
+
 #pragma once
 
 #include "Tasks/Task.hpp"

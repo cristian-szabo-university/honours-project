@@ -1,3 +1,13 @@
+/**
+    Platform.hpp
+
+    Project Name: HashCracker
+
+    Copyright (c) 2017 University of the West of Scotland
+    
+    Authors: Ioan-Cristian Szabo <cristian.szabo@outlook.com>
+*/
+
 #pragma once
 
 namespace HonoursProject
@@ -17,7 +27,7 @@ namespace HonoursProject
         const std::size_t MAX_EXEC_CACHE_SIZE = 128;
         const std::size_t MAX_SPEED_CACHE_SIZE = 128;
 
-        const std::size_t AUTOTUNE_VALIDATE_CHECKS = 1;
+        const std::size_t AUTOTUNE_VALIDATE_CHECKS = 3;
         const std::size_t AUTOTUNE_DEVICE_SPEED_TRY = 128;
         const std::size_t AUTOTUNE_KERNEL_LOOPS_TRY = 128;
         const double AUTOTUNE_TARGET_SPEED = 12;

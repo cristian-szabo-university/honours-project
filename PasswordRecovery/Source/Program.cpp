@@ -1,3 +1,13 @@
+/**
+    Program.cpp
+
+    Project Name: PasswordRecovery
+
+    Copyright (c) 2017 University of the West of Scotland
+    
+    Authors: Ioan-Cristian Szabo <cristian.szabo@outlook.com>
+*/
+
 #include "HashCracker.hpp"
 
 #include "docopt.h"

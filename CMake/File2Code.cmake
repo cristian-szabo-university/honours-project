@@ -13,7 +13,19 @@ string(REPLACE ".cpp" ".hpp" FILE_HPP_OUT "${FILE_OUT}")
 get_filename_component(FILE_HPP_OUT_NAME "${FILE_HPP_OUT}" NAME)
 
 set(STR_CPP 
-"// This file is auto-generated. Do not edit!
+"
+/**
+    ProgramEntry.hpp
+
+    Project Name: HashCracker
+
+    Copyright (c) 2017 University of the West of Scotland
+    
+    Authors: Ioan-Cristian Szabo <cristian.szabo@outlook.com>
+*/
+
+// This file is auto-generated. Do not edit!
+
 #include \"${FILE_HPP_OUT_NAME}\"
 
 namespace HonoursProject
@@ -40,7 +52,19 @@ namespace HonoursProject
 ")
 
 set(STR_HPP 
-"// This file is auto-generated. Do not edit!
+"
+/**
+    ProgramEntry.cpp
+
+    Project Name: HashCracker
+
+    Copyright (c) 2017 University of the West of Scotland
+    
+    Authors: Ioan-Cristian Szabo <cristian.szabo@outlook.com>
+*/
+
+// This file is auto-generated. Do not edit!
+
 #pragma once
 
 #include <string>

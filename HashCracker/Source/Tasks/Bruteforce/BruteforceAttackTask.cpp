@@ -1,3 +1,13 @@
+/**
+    BruteforceAttackTask.cpp
+
+    Project Name: HashCracker
+
+    Copyright (c) 2017 University of the West of Scotland
+    
+    Authors: Ioan-Cristian Szabo <cristian.szabo@outlook.com>
+*/
+
 #include "Config.hpp"
 
 #include "Tasks/Bruteforce/BruteforceAttackTask.hpp"
